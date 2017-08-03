@@ -22,37 +22,38 @@ set MARKED=0
 
 rem Check for begin and end tags in hosts file
 for /f "tokens=*" %%0 in (
-'findstr /b /i "####.BEGIN.UNIFIED.HOSTS.#### ####.END.UNIFIED.HOSTS.####" "%HOSTS%"'
+	'findstr /b /i "####.BEGIN.UNIFIED.HOSTS.#### ####.END.UNIFIED.HOSTS.####" "%HOSTS%"'
 ) do (
-if !MARKED!==1 if /i "%%0"=="#### END UNIFIED HOSTS ####" (set MARKED=2) else (set MARKED=-1)
-if /i "%%0"=="#### BEGIN UNIFIED HOSTS ####" set MARKED=1
+	if !MARKED!==1 if /i "%%0"=="#### END UNIFIED HOSTS ####" (set MARKED=2) else (set MARKED=-1)
+	if /i "%%0"=="#### BEGIN UNIFIED HOSTS ####" set MARKED=1
 )
 
 rem Assess tags as correct, incorrect, or absent
 rem If there are no tags, offer to install them
 rem Check to see if the file is null-terminating before appending extra white space
 if !MARKED!==0 (
-echo The Unified Hosts has not yet been marked in your local hosts file
-if "%1"=="" (
-choice /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
-if !ERRORLEVEL!==2 goto Mark)
-for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
-if not "!NTF!"=="" echo.>>"%HOSTS%"
-echo #### BEGIN UNIFIED HOSTS ####>>"%HOSTS%"
-echo #### END UNIFIED HOSTS ####>>"%HOSTS%"
-goto update
+	echo The Unified Hosts has not yet been marked in your local hosts file
+	if "%1"=="" (
+		choice /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
+		if !ERRORLEVEL!==2 goto Mark
+		)
+	for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
+	if not "!NTF!"=="" echo.>>"%HOSTS%"
+	echo #### BEGIN UNIFIED HOSTS ####>>"%HOSTS%"
+	echo #### END UNIFIED HOSTS ####>>"%HOSTS%"
+	goto update
 )
 
 if !MARKED!==2 (
-echo The Unified Hosts is already installed in your local hosts file
-if "%1"=="" (
-choice /M "Would you like to continue to update it?"
-if !errorlevel!==2 (
-choice /M "Would you like remove the Unified Hosts from your local hosts file?"
-if !errorlevel!==1 goto Remove
-)
-)
-) else (goto Mark)
+	echo The Unified Hosts is already installed in your local hosts file
+	if "%1"=="" (
+		choice /M "Would you like to continue to update it?"
+		if !errorlevel!==2 (
+			choice /M "Would you like remove the Unified Hosts from your local hosts file?"
+			if !errorlevel!==1 goto Remove
+			)
+		)
+	) else (goto Mark)
 
 echo Checking Unified Hosts version...
 
@@ -64,12 +65,13 @@ for /f "tokens=*" %%0 in ('findstr #.Date: "%HOSTS%"') do set OLD=%%0
 
 rem If the remote and local dates are not the same, update
 if "%OLD%"=="%NEW%" (
-if not "%1"=="" exit
-echo You already have the latest version.
-choice /M "Would you like to update anyway?"
-if !errorlevel!==1 (goto Update) else (exit /b)
+	if not "%1"=="" exit
+	echo You already have the latest version.
+	choice /M "Would you like to update anyway?"
+	if !errorlevel!==1 (goto Update) else (exit)
 ) else (
-echo Your version is out of date
+	echo Your version is out of date
+	
 goto Update
 )
 
@@ -112,32 +114,32 @@ exit
 rem If the generic URL is in place and not a specific one, prompt the user to select one
 if not "%URL:~-6%"=="/hosts" (
 
-echo The Unified Hosts will automatically block malware and adware.
-choice /m "Would you also like to block other categories?"
+	echo The Unified Hosts will automatically block malware and adware.
+	choice /m "Would you also like to block other categories?"
 
-if !errorlevel!==1 (
+	if !errorlevel!==1 (
 
-set CAT=
+		set CAT=
 
-choice /m "Would you also like to block fake news?"
-if !errorlevel!==1 set CAT=_fakenews_
+		choice /m "Would you also like to block fake news?"
+		if !errorlevel!==1 set CAT=_fakenews_
 
-choice /m "Would you also like to block gambling?"
-if !errorlevel!==1 set CAT=!CAT!_gambling_
+		choice /m "Would you also like to block gambling?"
+		if !errorlevel!==1 set CAT=!CAT!_gambling_
 
-choice /m "Would you also like to block porn?"
-if !errorlevel!==1 set CAT=!CAT!_porn_
+		choice /m "Would you also like to block porn?"
+		if !errorlevel!==1 set CAT=!CAT!_porn_
 
-choice /m "Would you also like to block social?"
-if !errorlevel!==1 set CAT=!CAT!_social_
+		choice /m "Would you also like to block social?"
+		if !errorlevel!==1 set CAT=!CAT!_social_
 
-if not "!CAT!"=="" (
-set CAT=!CAT:__=-!
-set CAT=!CAT:_=!
-set URL=!URL!/alternates/!CAT!
-)
-set URL=!URL!/hosts
-) else (set URL=!URL!/hosts)
+		if not "!CAT!"=="" (
+			set CAT=!CAT:__=-!
+			set CAT=!CAT:_=!
+			set URL=!URL!/alternates/!CAT!
+			)
+		set URL=!URL!/hosts
+	) else (set URL=!URL!/hosts)
 )
 
 echo Updating the hosts file...
@@ -156,28 +158,28 @@ set WRITE=1
 rem Rewrite the hosts file to a temporary file and inject new Unified Hosts after #### BEGIN UNIFIED HOSTS ####
 rem Filter Unified Hosts to remove localhost/loopback entries, invalid entries, and white space
 (
-for /f "tokens=1* delims=:" %%a in (
-'findstr /n .* "%HOSTS%"'
-) do (
-if !WRITE!==1 (
-if "%%b"=="" (echo.) else (
-if /i not "%%b"=="#### BEGIN UNIFIED HOSTS ####" echo %%b
-)
-if /i "%%b"=="#### BEGIN UNIFIED HOSTS ####" (
-if not !REMOVE!==1 (
-echo %%b
-for /f "tokens=*" %%0 in (
-'^(%WGET% %URL% ^| findstr /b /r /v "127[.]0[.]0[.]1 255[.]255[.]255[.]255 ::1 fe80:: 0[.]0[.]0[.]0.[0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*"^)'
-) do @echo %%0
-)
-set WRITE=0
-)
-)
-if /i "%%b"=="#### END UNIFIED HOSTS ####" (
-if not !REMOVE!==1 echo %%b
-set WRITE=1
-)
-)
+	for /f "tokens=1* delims=:" %%a in (
+		'findstr /n .* "%HOSTS%"'
+	) do (
+		if !WRITE!==1 (
+			if "%%b"=="" (echo.) else (
+				if /i not "%%b"=="#### BEGIN UNIFIED HOSTS ####" echo %%b
+			)
+			if /i "%%b"=="#### BEGIN UNIFIED HOSTS ####" (
+				if not !REMOVE!==1 (
+					echo %%b
+					for /f "tokens=*" %%0 in (
+						'^(%WGET% %URL% ^| findstr /b /r /v "127[.]0[.]0[.]1 255[.]255[.]255[.]255 ::1 fe80:: 0[.]0[.]0[.]0.[0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*"^)'
+					) do @echo %%0
+				)
+				set WRITE=0
+			)
+		)
+		if /i "%%b"=="#### END UNIFIED HOSTS ####" (
+			if not !REMOVE!==1 echo %%b
+			set WRITE=1
+		)
+	)
 ) > %TEMP%hosts
 
 rem Overwrite the old hosts with the new one
