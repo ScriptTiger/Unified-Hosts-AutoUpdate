@@ -10,9 +10,10 @@ rem Set Resource and target locations
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
 set HOSTS=C:\Windows\System32\drivers\etc\hosts
+set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 
 rem If the URL is not sent to the script as a parameter, set the base URL and make the script interactive
-if "%1"=="" (set URL=https://raw.githubusercontent.com/StevenBlack/hosts/master) else (set URL=%1)
+if "%1"=="" (set URL=%BASE%) else (set URL=%1)
 
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
@@ -58,7 +59,7 @@ if !MARKED!==2 (
 echo Checking Unified Hosts version...
 
 rem Grab date from remote Unified Hosts
-for /f "tokens=*" %%0 in ('%WGET% %URL%/hosts ^| findstr #.Date:') do set NEW=%%0
+for /f "tokens=*" %%0 in ('%WGET% %BASE%/hosts ^| findstr #.Date:') do set NEW=%%0
 
 rem rem Grab date from the Unified Hosts inside of the local hosts file
 for /f "tokens=*" %%0 in ('findstr #.Date: "%HOSTS%"') do set OLD=%%0
