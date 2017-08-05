@@ -52,7 +52,7 @@ rem If the versions don't match, automatically update and continue with updated 
 if not "%OLD%"=="%NEW%" (
 	echo A new update is available^^!
 	echo Updating script...
-	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd>"%DIR%test.txt"&echo %NEW%>"%VERSION%"&%0 /U
+	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd>"%DIR%test.txt"&echo !NEW!>"%VERSION%"&%0 /U
 )
 
 :Updated
