@@ -7,7 +7,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Set Resource and target locations
-set VERSION=%%~dp0VERSION
+set VERSION=%~dp0VERSION
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
