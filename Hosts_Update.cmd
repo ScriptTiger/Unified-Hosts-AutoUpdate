@@ -44,7 +44,7 @@ set /p OLD=<"%VERSION%"
 
 rem Strip out emergency status if present in local version
 if "%OLD:~,1%"=="X" (
-echo %OLD:~1%>"%VERSION%"
+	echo %OLD:~1%>"%VERSION%"
 )
 
 rem If the versions don't match, automatically update and continue with updated script
