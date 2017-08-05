@@ -26,6 +26,9 @@ if not "%1"=="" (
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
 
+rem Begin version checks
+echo Checking for updates...
+
 rem Grab remote script version
 rem On error, report connectivity problem
 (for /f %%0 in ('%WGET% %GH%/VERSION') do set NEW=%%0) || goto Connectivity
@@ -51,7 +54,7 @@ rem If the versions don't match, automatically update and continue with updated 
 if not "%OLD%"=="%NEW%" (
         echo A new update is available^^!
         echo Updating script...
-        timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&echo !NEW!>"%VERSION%"&%0 /U
+        timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&echo !NEW!>"%VERSION%"&"%~0" /U
 )
 
 :Updated
