@@ -7,10 +7,15 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Set Resource and target locations
+set VERSION=%~dp0VERSION
+set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
 set HOSTS=C:\Windows\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
+
+rem Check if script is returning from being updated and resume
+if "%1"=="/U" goto Updated
 
 rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
 if not "%1"=="" (
@@ -20,6 +25,36 @@ if not "%1"=="" (
 
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
+
+rem Grab remote script version
+rem On error, report connectivity problem
+(for /f %%0 in ('%WGET% %GH%/VERSION') do set NEW=%%0) || goto Connectivity
+
+rem Check for emergency stop status
+if "%NEW:~,1%"=="X" (
+	echo.
+	echo **We are currently working to fix a problem**
+	echo **Please try again later**
+	if not !QUIET!==1 pause
+	exit
+)
+
+rem Grab local script version
+set /p OLD=<"%VERSION%"
+
+rem Strip out emergency status if present in local version
+if "%OLD:~,1%"=="X" (
+echo %OLD:~1%>"%VERSION%"
+)
+
+rem If the versions don't match, automatically update and continue with updated script
+if not "%OLD%"=="%NEW%" (
+	echo A new update is available^^!
+	echo Updating script...
+	timeout /t 3 /nobreak > nul&(for /f "tokens=*" %%0 in ('%WGET% %GH%/Hosts_Update.cmd') do @echo%%0>"%~0"&echo %NEW%>"%VERSION%"&%0 /U
+)
+
+:Updated
 
 rem Initialize MARKED to 0 for no markings yet verified
 set MARKED=0
@@ -102,6 +137,13 @@ if "%OLD%"=="%NEW%" (
 	
 goto Update
 )
+
+:Connectivity
+echo.
+echo This script cannot connect to the Internet^^!
+echo This script requires and active Internet connection to update your hosts file^^!
+if not !QUIET!==1 pause
+exit
 
 :Wget
 echo Wget cannot be found
