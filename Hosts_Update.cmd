@@ -91,8 +91,6 @@ for /f "tokens=*" %%0 in (
 	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
 )
 
-rem C:\Users\user\Desktop\projects\GitHub\Unified-Hosts-AutoUpdate\hosts_update https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews/hosts
-
 rem If the remote and local dates and URLs are not the same, update
 if "%OLD%"=="%NEW%" (
 	if !QUIET!==1 exit
