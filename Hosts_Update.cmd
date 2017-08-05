@@ -3,7 +3,7 @@
 rem Check for admin rights, and exit if none present
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" || goto Admin
 
-rem Enabledelayed expansion to be used during for loops
+rem Enable delayed expansion to be used during for loops and other parenthetical groups
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Set Resource and target locations
@@ -12,8 +12,11 @@ set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
 set HOSTS=C:\Windows\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 
-rem If the URL is not sent to the script as a parameter, set the base URL and make the script interactive
-if "%1"=="" (set URL=%BASE%) else (set URL=%1)
+rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
+if not "%1"=="" (
+	set URL=%1
+	set QUIET=1
+)
 
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
@@ -34,7 +37,7 @@ rem If there are no tags, offer to install them
 rem Check to see if the file is null-terminating before appending extra white space
 if !MARKED!==0 (
 	echo The Unified Hosts has not yet been marked in your local hosts file
-	if "%1"=="" (
+	if not !QUIET!==1 (
 		choice /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
 		if !ERRORLEVEL!==2 goto Mark
 		)
@@ -47,26 +50,52 @@ if !MARKED!==0 (
 
 if !MARKED!==2 (
 	echo The Unified Hosts is already installed in your local hosts file
-	if "%1"=="" (
+	if not !QUIET!==1 (
 		choice /M "Would you like to continue to update it?"
 		if !errorlevel!==2 (
 			choice /M "Would you like remove the Unified Hosts from your local hosts file?"
-			if !errorlevel!==1 goto Remove
+			if !errorlevel!==1 (goto Remove) else (exit)
 			)
 		)
 	) else (goto Mark)
 
 echo Checking Unified Hosts version...
 
-rem Grab date from remote Unified Hosts
-for /f "tokens=*" %%0 in ('%WGET% %BASE%/hosts ^| findstr #.Date:') do set NEW=%%0
+rem rem Grab date and URL from the Unified Hosts inside of the local hosts file
+for /f "tokens=*" %%0 in (
+	'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%HOSTS%"'
+) do (
+	set LINE=%%0
+	if "!LINE:~,8!"=="# Date: " set OLD=%%0
+	if "!LINE:~,8!"=="# Fetch " (
+		set OLD=!OLD!%%0
+		if not !QUIET!==1 (
+			set URL=%%0
+			set URL=!URL:~41!
+		)
+	)
+)
 
-rem rem Grab date from the Unified Hosts inside of the local hosts file
-for /f "tokens=*" %%0 in ('findstr #.Date: "%HOSTS%"') do set OLD=%%0
+rem If the markings are there but no Unified Hosts, skip the rest of the check and continue to update
+if not !QUIET!==1 if "%OLD%"=="" (
+	set URL=NUL
+	goto Update
+)
 
-rem If the remote and local dates are not the same, update
+rem Grab date and URL from remote Unified Hosts
+for /f "tokens=*" %%0 in (
+	'^(%WGET% %URL% ^| findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:"^)'
+) do (
+	set LINE=%%0
+	if "!LINE:~,8!"=="# Date: " set NEW=%%0
+	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
+)
+
+rem C:\Users\user\Desktop\projects\GitHub\Unified-Hosts-AutoUpdate\hosts_update https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews/hosts
+
+rem If the remote and local dates and URLs are not the same, update
 if "%OLD%"=="%NEW%" (
-	if not "%1"=="" exit
+	if !QUIET!==1 exit
 	echo You already have the latest version.
 	choice /M "Would you like to update anyway?"
 	if !errorlevel!==1 (goto Update) else (exit)
@@ -81,12 +110,12 @@ echo Wget cannot be found
 echo You can do either of the following
 echo 1.] Put the Wget directory in the same directory as this script
 echo 2.] Edit the "WGETP" variable of this script
-if "%1"=="" pause
+if not !QUIET!==1 pause
 exit
 
 :Admin
 echo You must run this with administrator privileges!
-if "%1"=="" pause
+if not !QUIET!==1 pause
 exit
 
 :Mark
@@ -100,24 +129,31 @@ echo #### END UNIFIED HOSTS ####
 echo.
 echo Notes: You should only have to mark this once
 echo Updates automatically overwite between the above lines
-if "%1"=="" pause
+if not !QUIET!==1 pause
 exit
 
+rem Function to remove Unified Hosts from local hosts file
 :Remove
 set REMOVE=1
 call :File
 echo The Unified Host has been removed
-if "%1"=="" pause
+if not !QUIET!==1 pause
 exit
 
+rem Function to update current local hosts with current Unified Hosts
 :Update
 
-rem If the generic URL is in place and not a specific one, prompt the user to select one
-if not "%URL:~-6%"=="/hosts" (
+if not !QUIET!==1 (
+
+	if "%URL:~-6%"=="/hosts" (
+		echo Your current preset is to use the following Unified Hosts:
+		echo %URL%
+		choice /m "Would you like to just stick with that?"
+		if !errorlevel!==1 goto Skip_Choice
+	)
 
 	echo The Unified Hosts will automatically block malware and adware.
 	choice /m "Would you also like to block other categories?"
-
 	if !errorlevel!==1 (
 
 		set CAT=
@@ -137,17 +173,21 @@ if not "%URL:~-6%"=="/hosts" (
 		if not "!CAT!"=="" (
 			set CAT=!CAT:__=-!
 			set CAT=!CAT:_=!
-			set URL=!URL!/alternates/!CAT!
-			)
-		set URL=!URL!/hosts
-	) else (set URL=!URL!/hosts)
+			set URL=%BASE%/alternates/!CAT!/hosts
+		) else (set URL=%BASE%/hosts)
+	) else (set URL=%BASE%/hosts)
 )
+
+rem If the URL is still not complete by this point, just set the default as the basic Unified Hosts with no extensions
+if not "%URL:~-6%"=="/hosts" set URL=%BASE%/hosts
+
+:Skip_Choice
 
 echo Updating the hosts file...
 call :File
 
 echo Your Unified Hosts has been updated
-if "%1"=="" pause
+if not !QUIET!==1 pause
 exit
 
 rem File writing function
@@ -183,7 +223,9 @@ rem Filter Unified Hosts to remove localhost/loopback entries, invalid entries, 
 	)
 ) > %TEMP%hosts
 
+rem Wait some time to make sure all the processes are done accessing the hosts
 rem Overwrite the old hosts with the new one
+timeout /t 3 /nobreak > nul
 copy "%TEMP%hosts" "%HOSTS%" /y > nul
 
 exit /b
