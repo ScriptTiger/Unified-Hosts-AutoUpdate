@@ -51,7 +51,7 @@ rem If the versions don't match, automatically update and continue with updated 
 if not "%OLD%"=="%NEW%" (
 	echo A new update is available^^!
 	echo Updating script...
-	timeout /t 3 /nobreak > nul&(for /f "tokens=*" %%0 in ('%WGET% %GH%/Hosts_Update.cmd') do @echo%% 0)>"%~0"&echo %NEW%>"%VERSION%"&%0 /U
+	timeout /t 3 /nobreak > nul&(for /f "tokens=*" %%0 in ('%WGET% %GH%/Hosts_Update.cmd') do @echo %%0)>"%~0"&echo %NEW%>"%VERSION%"&%0 /U
 )
 
 :Updated
