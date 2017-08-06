@@ -27,7 +27,7 @@ rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
 
 rem Begin version checks
-echo Checking for updates...
+echo Checking for script updates...
 
 rem Grab remote script version
 rem On error, report connectivity problem
@@ -52,7 +52,7 @@ if "%OLD:~,1%"=="X" (
 
 rem If the versions don't match, automatically update and continue with updated script
 if not "%OLD%"=="%NEW%" (
-        echo A new update is available^^!
+        echo A new script update is available^^!
         echo Updating script...
         timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&echo !NEW!>"%VERSION%"&"%~0" /U
 )
@@ -97,7 +97,7 @@ if !MARKED!==2 (
                 )
         ) else (goto Mark)
 
-echo Checking Unified Hosts version...
+echo Checking for Unified Hosts updates...
 
 rem rem Grab date and URL from the Unified Hosts inside of the local hosts file
 for /f "tokens=*" %%0 in (
@@ -136,9 +136,8 @@ if "%OLD%"=="%NEW%" (
         choice /M "Would you like to update anyway?"
         if !errorlevel!==1 (goto Update) else (exit)
 ) else (
-        echo Your version is out of date
-        
-goto Update
+        echo A new Unified Hosts update is available^^!
+        goto Update
 )
 
 :Connectivity
