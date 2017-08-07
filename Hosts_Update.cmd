@@ -91,11 +91,12 @@ if !MARKED!==2 (
 	if not !QUIET!==1 (
 		choice /M "Would you like to continue to update it?"
 		if !errorlevel!==2 (
-			choice /M "Would you like remove the Unified Hosts from your local hosts file?"
+			choice /M "Would you like to remove the Unified Hosts from your local hosts file?"
 			if !errorlevel!==1 (
 				set REMOVE=1
 				call :File
 				echo The Unified Host has been removed
+				call :Flush
 				goto Notepad
 			)
 			exit
@@ -192,6 +193,7 @@ echo Updating the hosts file...
 call :File
 
 echo Your Unified Hosts has been updated
+call :Flush
 if not !QUIET!==1 goto Notepad
 exit
 
@@ -233,6 +235,12 @@ rem Overwrite the old hosts with the new one
 timeout /t 3 /nobreak > nul
 copy "%TEMP%hosts" "%HOSTS%" /y > nul
 
+exit /b
+
+rem Flush the DNS cache
+:Flush
+echo Flushing local DNS cache...
+ipconfig /flushdns > nul
 exit /b
 
 rem Ask to see hosts file before exiting
