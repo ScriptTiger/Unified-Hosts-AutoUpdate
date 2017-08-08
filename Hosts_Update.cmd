@@ -78,7 +78,7 @@ if !MARKED!==0 (
 	if not !QUIET!==1 (
 		choice /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
 		if !ERRORLEVEL!==2 goto Mark
-		)
+	)
 	for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
 	if not "!NTF!"=="" echo.>>"%HOSTS%"
 	echo #### BEGIN UNIFIED HOSTS ####>>"%HOSTS%"
