@@ -9,6 +9,7 @@ setlocal ENABLEDELAYEDEXPANSION
 rem Set Resource and target locations
 set VERSION=%~dp0VERSION
 set IGNORE=%~dp0ignore.txt
+set README=%~dp0README.md
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
@@ -16,7 +17,10 @@ set HOSTS=C:\Windows\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 
 rem Check if script is returning from being updated and resume
-if "%1"=="/U" goto Updated
+if "%1"=="/U" (
+	%WGET% %GH%/README.md | more > "%README%"
+	goto Updated
+)
 
 rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
 if not "%1"=="" (
