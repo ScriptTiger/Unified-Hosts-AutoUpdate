@@ -8,6 +8,7 @@ setlocal ENABLEDELAYEDEXPANSION
 
 rem Set Resource and target locations
 set VERSION=%~dp0VERSION
+set IGNORE=%~dp0ignore.txt
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
@@ -59,6 +60,23 @@ if not "%OLD%"=="%NEW%" (
 
 :Updated
 
+rem If the ignore list doesn't exist, make one
+rem This CANNOT be empty
+if not exist "%IGNORE%" (
+	(
+		echo # Ignore list written in literal expressions
+		echo # If you decide to delete the below entries, DO NOT delete these above comment lines
+		echo # If this file is left completely empty, the script will break
+		echo 127.0.0.1 localhost
+		echo 127.0.0.1 localhost.localdomain
+		echo 127.0.0.1 local
+		echo 255.255.255.255 broadcasthost
+		echo ::1 localhost
+		echo fe80::1%%lo0 localhost
+		echo 0.0.0.0 0.0.0.0
+	) > "%IGNORE%"
+)
+
 rem Initialize MARKED to 0 for no markings yet verified
 set MARKED=0
 
@@ -106,6 +124,9 @@ if !MARKED!==2 (
 
 echo Checking for Unified Hosts updates...
 
+rem Initialize OLD to NUL in case markings are present but not Unified Hosts
+set OLD=NUL
+
 rem rem Grab date and URL from the Unified Hosts inside of the local hosts file
 for /f "tokens=*" %%0 in (
 	'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%HOSTS%"'
@@ -122,10 +143,7 @@ for /f "tokens=*" %%0 in (
 )
 
 rem If the markings are there but no Unified Hosts, skip the rest of the check and continue to update
-if not !QUIET!==1 if "%OLD%"=="" (
-	set URL=NUL
-	goto Update
-)
+if "%OLD%"=="NUL" goto Update
 
 rem Grab date and URL from remote Unified Hosts
 for /f "tokens=*" %%0 in (
@@ -204,7 +222,7 @@ rem To be disabled later to skip old hosts section, and then re-enable to contin
 set WRITE=1
 
 rem Rewrite the hosts file to a temporary file and inject new Unified Hosts after #### BEGIN UNIFIED HOSTS ####
-rem Filter Unified Hosts to remove localhost/loopback entries, invalid entries, and white space
+rem Filter Unified Hosts to remove white space and entries from ignore list
 (
 	for /f "tokens=1* delims=:" %%a in (
 		'findstr /n .* "%HOSTS%"'
@@ -217,7 +235,7 @@ rem Filter Unified Hosts to remove localhost/loopback entries, invalid entries, 
 				if not !REMOVE!==1 (
 					echo %%b
 					for /f "tokens=*" %%0 in (
-						'^(%WGET% %URL% ^| findstr /b /r /v "127[.]0[.]0[.]1 255[.]255[.]255[.]255 ::1 fe80:: 0[.]0[.]0[.]0.[0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*"^)'
+						'^(%WGET% %URL% ^| findstr /l /v /g:"%IGNORE%"^)'
 					) do @echo %%0
 				)
 				set WRITE=0

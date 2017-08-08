@@ -1,0 +1,10 @@
+# Ignore list written in literal expressions
+# If you decide to delete the below entries, DO NOT delete these above comment lines
+# If this file is left completely empty, the script will break
+127.0.0.1 localhost
+127.0.0.1 localhost.localdomain
+127.0.0.1 local
+255.255.255.255 broadcasthost
+::1 localhost
+fe80::1%lo0 localhost
+0.0.0.0 0.0.0.0
