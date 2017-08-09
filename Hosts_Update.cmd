@@ -10,11 +10,13 @@ rem Set Resource and target locations
 set VERSION=%~dp0VERSION
 set IGNORE=%~dp0ignore.txt
 set README=%~dp0README.md
+set SELF=%~0
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
 set HOSTS=C:\Windows\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
+set XML=%TEMP%UHAU.xml
 
 rem Check if script is returning from being updated and resume
 if "%1"=="/U" (
@@ -23,6 +25,8 @@ if "%1"=="/U" (
 )
 
 rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
+rem Initialize QUIET to off/0
+set QUIET=0
 if not "%1"=="" (
 	set URL=%1
 	set QUIET=1
@@ -30,6 +34,19 @@ if not "%1"=="" (
 
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
+
+rem Check to see if there is currently a scheduled update task
+rem If there is, ask if they want to keep it
+rem Initialize TASK to 0 for nothing found yet
+if not !QUIET!==1 (
+	set TASK=0
+	for /f "tokens=*" %%0 in ('schtasks.exe ^| findstr "Unified Hosts AutoUpdate"') do set TASK=1
+	if !TASK!==1 (
+		echo You currently have a scheduled task already in place
+		choice /m "Would you like to keep it?"
+		if !errorlevel!==2 schtasks.exe /delete /tn "Unified Hosts AutoUpdate" /f
+	)
+)
 
 rem Begin version checks
 echo Checking for script updates...
@@ -216,7 +233,10 @@ call :File
 
 echo Your Unified Hosts has been updated
 call :Flush
-if not !QUIET!==1 goto Notepad
+if not !QUIET!==1 (
+	if not !TASK!==1 call :Schedule
+	goto Notepad
+)
 exit
 
 rem File writing function
@@ -257,6 +277,63 @@ rem Overwrite the old hosts with the new one
 timeout /t 3 /nobreak > nul
 copy "%TEMP%hosts" "%HOSTS%" /y > nul
 
+exit /b
+
+rem Schedule task function
+:Schedule
+echo You don't yet have a scheduled task to automatically update daily
+choice /m "Would you like to create a scheduled task now?"
+if !errorlevel!==2 exit /b
+(
+	echo ^<?xml version="1.0" encoding="UTF-16"?^>
+	echo ^<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"^>
+	echo ^<RegistrationInfo^>
+	echo ^<URI^>\Unified Hosts AutoUpdate^</URI^>
+	echo ^</RegistrationInfo^>
+	echo ^<Triggers^>
+	echo ^<CalendarTrigger^>
+	echo ^<StartBoundary^>2000-01-01T03:00:00^</StartBoundary^>
+	echo ^<ExecutionTimeLimit^>PT30M^</ExecutionTimeLimit^>
+	echo ^<Enabled^>true^</Enabled^>
+	echo ^<ScheduleByDay^>
+	echo ^<DaysInterval^>1^</DaysInterval^>
+	echo ^</ScheduleByDay^>
+	echo ^</CalendarTrigger^>
+	echo ^</Triggers^>
+	echo ^<Principals^>
+	echo ^<Principal id="Author"^>
+	echo ^<UserId^>S-1-5-18^</UserId^>
+	echo ^<RunLevel^>HighestAvailable^</RunLevel^>
+	echo ^</Principal^>
+	echo ^</Principals^>
+	echo ^<Settings^>
+	echo ^<MultipleInstancesPolicy^>IgnoreNew^</MultipleInstancesPolicy^>
+	echo ^<DisallowStartIfOnBatteries^>true^</DisallowStartIfOnBatteries^>
+	echo ^<StopIfGoingOnBatteries^>true^</StopIfGoingOnBatteries^>
+	echo ^<AllowHardTerminate^>true^</AllowHardTerminate^>
+	echo ^<StartWhenAvailable^>true^</StartWhenAvailable^>
+	echo ^<RunOnlyIfNetworkAvailable^>false^</RunOnlyIfNetworkAvailable^>
+	echo ^<IdleSettings^>
+	echo ^<StopOnIdleEnd^>true^</StopOnIdleEnd^>
+	echo ^<RestartOnIdle^>false^</RestartOnIdle^>
+	echo ^</IdleSettings^>
+	echo ^<AllowStartOnDemand^>true^</AllowStartOnDemand^>
+	echo ^<Enabled^>true^</Enabled^>
+	echo ^<Hidden^>false^</Hidden^>
+	echo ^<RunOnlyIfIdle^>false^</RunOnlyIfIdle^>
+	echo ^<WakeToRun^>false^</WakeToRun^>
+	echo ^<ExecutionTimeLimit^>PT30M^</ExecutionTimeLimit^>
+	echo ^<Priority^>7^</Priority^>
+	echo ^</Settings^>
+	echo ^<Actions Context="Author"^>
+	echo ^<Exec^>
+	echo ^<Command^>"%SELF%"^</Command^>
+	echo ^<Arguments^>%URL%^</Arguments^>
+	echo ^</Exec^>
+	echo ^</Actions^>
+	echo ^</Task^>
+) > "%XML%"
+schtasks /create /ru "SYSTEM" /tn "Unified Hosts AutoUpdate" /xml "%XML%"
 exit /b
 
 rem Flush the DNS cache
