@@ -16,6 +16,7 @@ set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
 set HOSTS=C:\Windows\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
+set TASKER=C:\Windows\System32\schtasks.exe
 set XML=%TEMP%UHAU.xml
 
 rem Check if script is returning from being updated and resume
@@ -35,16 +36,20 @@ if not "%1"=="" (
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
 
+rem Check to see if the Windows version is compatible with the scripted scheduler
 rem Check to see if there is currently a scheduled update task
 rem If there is, ask if they want to keep it
-rem Initialize TASK to 0 for nothing found yet
 if not !QUIET!==1 (
-	set TASK=0
-	for /f "tokens=*" %%0 in ('schtasks.exe ^| findstr "Unified Hosts AutoUpdate"') do set TASK=1
-	if !TASK!==1 (
-		echo You currently have a scheduled task already in place
-		choice /m "Would you like to keep it?"
-		if !errorlevel!==2 schtasks.exe /delete /tn "Unified Hosts AutoUpdate" /f
+	if exist "%TASKER%" (
+		set TASK=0
+		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified Hosts AutoUpdate"') do set TASK=1
+		if !TASK!==1 (
+			echo You currently have a scheduled task already in place
+			choice /m "Would you like to keep it?"
+			if !errorlevel!==2 schtasks /delete /tn "Unified Hosts AutoUpdate" /f
+		)
+	) else (
+		set TASK=2
 	)
 )
 
@@ -233,8 +238,17 @@ call :File
 
 echo Your Unified Hosts has been updated
 call :Flush
+
 if not !QUIET!==1 (
-	if not !TASK!==1 call :Schedule
+	if !TASK!==0 call :Schedule
+	if !TASK!==2 (
+		echo Your version of Windows isn't compatible with this script's task scheduler
+		echo In your task scheduler, schedule a task to execute this script
+		echo Following the script's path, send the URL of the blacklist you want:
+		echo "%~0" %URL%
+		choice /m "Would you like to open the Task Scheduler now?"
+		if !errorlevel!==1 start taskschd.msc
+	)
 	goto Notepad
 )
 exit
