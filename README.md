@@ -11,7 +11,7 @@ Further project contributors are noted with their contributions in the Unified H
 
 To get started, download the AutoUpdate.zip:
 
-https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/blob/master/AutoUpdate.zip
+https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/raw/master/AutoUpdate.zip
 
 Extract the contents to the same directory and run the Hosts_Update.cmd script. There is also an option to remove the Unified Hosts from your local hosts file. In the event critical changes are made to either the AutoUpdate repo or to the Unified Hosts repo, this script is also capable of automatically updating itself.
 
