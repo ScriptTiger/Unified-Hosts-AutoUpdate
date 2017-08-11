@@ -19,39 +19,26 @@ set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 set TASKER=C:\Windows\System32\schtasks.exe
 set XML=%TEMP%UHAU.xml
 
-rem Check if script is returning from being updated and resume
+rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
+	cls
+	echo The updated script has been loaded
+	echo %NEW%>"%VERSION%"
 	%WGET% %GH%/README.md | more > "%README%"
-	goto Updated
-)
+	set UPDATE=1
+) else (
+	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
+	rem Initialize QUIET to off/0
 
-rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
-rem Initialize QUIET to off/0
-set QUIET=0
-if not "%1"=="" (
-	set URL=%1
-	set QUIET=1
+	set QUIET=0
+	if not "%1"=="" (
+		set URL=%1
+		set QUIET=1
+	)
 )
 
 rem Make sure Wget can be found
 if not exist "%WGETP%" goto Wget
-
-rem Check to see if the Windows version is compatible with the scripted scheduler
-rem Check to see if there is currently a scheduled update task
-rem If there is, ask if they want to keep it
-if not !QUIET!==1 (
-	if exist "%TASKER%" (
-		set TASK=0
-		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified Hosts AutoUpdate"') do set TASK=1
-		if !TASK!==1 (
-			echo You currently have a scheduled task already in place
-			choice /m "Would you like to keep it?"
-			if !errorlevel!==2 schtasks /delete /tn "Unified Hosts AutoUpdate" /f
-		)
-	) else (
-		set TASK=2
-	)
-)
 
 rem Begin version checks
 echo Checking for script updates...
@@ -81,16 +68,33 @@ rem If the versions don't match, automatically update and continue with updated 
 if not "%OLD%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
-	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&echo !NEW!>"%VERSION%"&"%~0" /U
-)
+	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&timeout /t 3 /nobreak > nul&"%~0" /U
+) else echo Your script is up to date
 
-:Updated
+rem Check to see if the Windows version is compatible with the scripted scheduler
+rem Check to see if there is currently a scheduled update task
+rem If there is, ask if they want to keep it
+if not !QUIET!==1 (
+	if exist "%TASKER%" (
+		set TASK=0
+		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified Hosts AutoUpdate"') do set TASK=1
+		if !TASK!==1 (
+			echo You currently have a scheduled task already in place
+			choice /m "Would you like to keep it?"
+			if !errorlevel!==2 schtasks /delete /tn "Unified Hosts AutoUpdate" /f
+		)
+	) else (
+		set TASK=2
+	)
+)
 
 rem If the ignore list doesn't exist, make one
 rem This CANNOT be empty
 if not exist "%IGNORE%" (
 	(
 		echo # Ignore list written in literal expressions
+		echo # These changes will take effect the next time the Unified Hosts is updated
+		echo # To force changes now, run Hosts_Update.cmd with the "update anyway" option
 		echo # If you decide to delete the below entries, DO NOT delete these above comment lines
 		echo # If this file is left completely empty, the script will break
 		echo 127.0.0.1 localhost
