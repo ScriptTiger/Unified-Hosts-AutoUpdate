@@ -18,6 +18,7 @@ set HOSTS=C:\Windows\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 set TASKER=C:\Windows\System32\schtasks.exe
 set XML=%TEMP%UHAU.xml
+set HASHER=C:\Windows\System32\certutil.exe
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
@@ -25,16 +26,15 @@ if "%1"=="/U" (
 	echo The updated script has been loaded
 	echo %NEW%>"%VERSION%"
 	%WGET% %GH%/README.md | more > "%README%"
-	set UPDATE=1
 ) else (
+
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
 	rem Initialize QUIET to off/0
 
-	set QUIET=0
 	if not "%1"=="" (
 		set URL=%1
 		set QUIET=1
-	)
+	) else set QUIET=0
 )
 
 rem Make sure Wget can be found
@@ -93,7 +93,7 @@ rem This CANNOT be empty
 if not exist "%IGNORE%" (
 	(
 		echo # Ignore list written in literal expressions
-		echo # These changes will take effect the next time the Unified Hosts is updated
+		echo # These changes will take effect automatically the next scheduled update
 		echo # To force changes now, run Hosts_Update.cmd with the "update anyway" option
 		echo # If you decide to delete the below entries, DO NOT delete these above comment lines
 		echo # If this file is left completely empty, the script will break
@@ -106,6 +106,16 @@ if not exist "%IGNORE%" (
 		echo 0.0.0.0 0.0.0.0
 	) > "%IGNORE%"
 )
+
+rem Grab hash of current ignore list and hash recorded in hosts file
+if exist "%HASHER%" (
+	set HASH=1
+	for /f %%0 in ('certutil -hashfile "%IGNORE%" md5 ^| findstr /v :') do set NEWIGNORE=%%0
+	for /f "tokens=1,2 delims=:" %%0 in ('findstr /b #.Ignore.list: "%HOSTS%"') do (
+		set OLDIGNORE=%%1
+		set OLDIGNORE=!OLDIGNORE:~1!
+	)
+) else set HASH=0
 
 rem Initialize MARKED to 0 for no markings yet verified
 set MARKED=0
@@ -150,7 +160,7 @@ if !MARKED!==2 (
 			exit
 		)
 	)
-) else (goto Mark)
+) else goto Mark
 
 echo Checking for Unified Hosts updates...
 
@@ -184,15 +194,19 @@ for /f "tokens=*" %%0 in (
 	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
 )
 
+rem If the ignore list is not applied to the hosts file, upate
+if !HASH!==1 if not "!NEWIGNORE!"=="!OLDIGNORE!" (
+	echo Your current ignore list has not yet been applied to your hosts file
+	goto Update
+)
+
 rem If the remote and local dates and URLs are not the same, update
 if "%OLD%"=="%NEW%" (
 	if !QUIET!==1 exit
 	echo You already have the latest version.
 	choice /M "Would you like to update anyway?"
 	if !errorlevel!==2 exit
-) else (
-	echo A new Unified Hosts update is available^^!
-)
+) else echo A new Unified Hosts update is available^^!
 
 rem Function to update current local hosts with current Unified Hosts
 :Update
@@ -229,7 +243,7 @@ if not !QUIET!==1 (
 			set CAT=!CAT:_=!
 			set URL=%BASE%/alternates/!CAT!/hosts
 		) else (set URL=%BASE%/hosts)
-	) else (set URL=%BASE%/hosts)
+	) else set URL=%BASE%/hosts
 )
 
 rem If the URL is still not complete by this point, just set the default as the basic Unified Hosts with no extensions
@@ -276,6 +290,10 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 			if /i "%%b"=="#### BEGIN UNIFIED HOSTS ####" (
 				if not !REMOVE!==1 (
 					echo %%b
+					echo # Managed by ScriptTiger's Unified Hosts AutoUpdate
+					echo # https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
+					if !HASH!==1 echo # Ignore list: %NEWIGNORE%
+					echo #
 					for /f "tokens=*" %%0 in (
 						'^(%WGET% %URL% ^| findstr /l /v /g:"%IGNORE%"^)'
 					) do @echo %%0

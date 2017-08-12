@@ -1,5 +1,5 @@
 # Ignore list written in literal expressions
-# These changes will take effect the next time the Unified Hosts is updated
+# These changes will take effect automatically the next scheduled update
 # To force changes now, run Hosts_Update.cmd with the "update anyway" option
 # If you decide to delete the below entries, DO NOT delete these above comment lines
 # If this file is left completely empty, the script will break
