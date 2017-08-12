@@ -25,6 +25,7 @@ if "%1"=="/U" (
 	echo The updated script has been loaded
 	echo %NEW%>"%VERSION%"
 	%WGET% %GH%/README.md | more > "%README%"
+	set UPDATE=1
 ) else (
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
 	rem Initialize QUIET to off/0
@@ -142,7 +143,6 @@ if !MARKED!==2 (
 			if !errorlevel!==1 (
 				set REMOVE=1
 				call :File
-				set REMOVE=
 				echo The Unified Host has been removed
 				call :Flush
 				goto Notepad
@@ -184,31 +184,13 @@ for /f "tokens=*" %%0 in (
 	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
 )
 
-rem Format time modified of hosts and ignore list files to be sorted
-for /f "tokens=1,2" %%a in ('echo %IGNORE% IGNORE^&echo %HOSTS% HOSTS') do (
-	for /f "tokens=1,2,3,4,5,6 delims=/: " %%0 in ('echo %%~ta') do (
-		set HOUR=%%3
-		set MERIDIEM=%%5
-		if "!MERIDIEM!"=="AM" if !HOUR!==12 set HOUR=00
-		if "!MERIDIEM!"=="PM" if not !HOUR!==12 set /a HOUR=!HOUR!+12
-		set MOD%%b=%%2%%0%%1!HOUR!%%4 %%b
-	)
-)
-
-rem Sort the time modifed of hosts and ignore to see which is newer
-for /f "tokens=1,2" %%0 in ('^(echo %MODIGNORE%^&echo %MODHOSTS%^)^|sort') do set NEWER=%%1
-
 rem If the remote and local dates and URLs are not the same, update
 if "%OLD%"=="%NEW%" (
-	if "%NEWER%"=="IGNORE" (
-		echo Your ignore list is newer than your hosts file
-	) else (
-		if !QUIET!==1 exit
-		echo You already have the latest version.
-		choice /M "Would you like to update anyway?"
-		if !errorlevel!==2 exit
-	)
-) else ( 
+	if !QUIET!==1 exit
+	echo You already have the latest version.
+	choice /M "Would you like to update anyway?"
+	if !errorlevel!==2 exit
+) else (
 	echo A new Unified Hosts update is available^^!
 )
 
