@@ -15,15 +15,12 @@ https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/raw/master/AutoUpdate.zi
 
 Extract the contents to the same directory and run the Hosts_Update.cmd script. There is also an option to remove the Unified Hosts from your local hosts file. In the event critical changes are made to either the AutoUpdate repo or to the Unified Hosts repo, this script is also capable of automatically updating itself.
 
-If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. If you want to ignore all .de websites, you can simply put:
-
-.de
-
-This entry by itself will ignore all .de entries. If you want to ignore all subdomains of google.com, you can put:
-
-.google.com
-
-This will ignore lines for all google.com subdomains.
+If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. If you want to ignore all .de websites, you can simply put:  
+.de  
+If you want to ignore all subdomains of google.com, you can put:  
+.google.com  
+If you want to ignore all google subdomains in any top level domain:  
+.google.
 
 Also, if you send your prefered URL to the script as a parameter, it will bypass all the prompts and automatically install/update the Unified Hosts in the local hosts file. This is useful for things like scheduling a task to update your Unified Hosts daily or weekly, etc. You can even update yourt hosts randomly throughout the day at certain times to switch between Unified Hosts to, for example, only allow social in the evenings or on the weekends. If you do decide to make a scheduled task, also remember the account issuing the task must still have administrative privileges to be able to write to the local hosts file.
 
