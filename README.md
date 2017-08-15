@@ -1,7 +1,7 @@
 # Unified Hosts AutoUpdate
 AutoUpdate script for Unified Hosts.
 
-This AutoUpdate project is maintained by ScriptTiger: https://github.com/ScriptTiger/DualServer
+This AutoUpdate project is maintained by ScriptTiger: https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 
 The Unified Hosts project is maintained by StevenBlack: https://github.com/StevenBlack/hosts
 
