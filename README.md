@@ -1,5 +1,5 @@
 # Unified Hosts AutoUpdate
-Quickly and easily install, unsintall, and set up automatic updates for any of Steven Black's unified hosts files.
+Quickly and easily install, unsinstall, and set up automatic updates for any of Steven Black's unified hosts files.
 
 This AutoUpdate project is maintained by ScriptTiger: https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 
