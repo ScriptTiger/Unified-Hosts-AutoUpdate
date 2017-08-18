@@ -3,15 +3,14 @@ AutoUpdate script for Unified Hosts.
 
 This AutoUpdate project is maintained by ScriptTiger: https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 
-The Unified Hosts project is maintained by StevenBlack: https://github.com/StevenBlack/hosts
+The Unified Hosts project is maintained by Steven Black: https://github.com/StevenBlack/hosts
 
 Wget is also a component to this project licensed separately in accordance with its attached documentation.
 
 Further project contributors are noted with their contributions in the Unified Hosts data, both available online from Steven Black's project as well as in the data injected into the local hosts file by this script, as it is downloaded directly from Steven Black's most recently pre-generated Unified Hosts files.
 
-To get started, download the AutoUpdate.zip:
-
-https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/raw/master/AutoUpdate.zip
+You can download this repo from the below link to get started:  
+https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/archive/master.zip
 
 Extract the contents to the same directory and run the Hosts_Update.cmd script. There is also an option to remove the Unified Hosts from your local hosts file. In the event critical changes are made to either the AutoUpdate repo or to the Unified Hosts repo, this script is also capable of automatically updating itself.
 
