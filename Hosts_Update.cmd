@@ -8,7 +8,7 @@ rem https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 rem =====
 
 rem Check for admin rights, and exit if none present
->nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" || goto Admin
+"%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" > nul || goto Admin
 
 rem Enable delayed expansion to be used during for loops and other parenthetical groups
 setlocal ENABLEDELAYEDEXPANSION
@@ -21,11 +21,11 @@ set SELF=%~0
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
-set HOSTS=C:\Windows\System32\drivers\etc\hosts
+set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
-set TASKER=C:\Windows\System32\schtasks.exe
+set TASKER=%SYSTEMROOT%\System32\schtasks.exe
 set XML=%TEMP%UHAU.xml
-set HASHER=C:\Windows\System32\certutil.exe
+set HASHER=%SYSTEMROOT%\System32\certutil.exe
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
