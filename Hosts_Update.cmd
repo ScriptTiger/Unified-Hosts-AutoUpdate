@@ -24,7 +24,7 @@ set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
 set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 set TASKER=%SYSTEMROOT%\System32\schtasks.exe
-set XML=%TEMP%UHAU.xml
+set XML=%TEMP%\UHAU.xml
 set HASHER=%SYSTEMROOT%\System32\certutil.exe
 
 rem Check if script is returning from being updated and finish update process
