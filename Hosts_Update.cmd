@@ -377,6 +377,7 @@ if !errorlevel!==2 exit /b
 	echo ^</Task^>
 ) > "%XML%"
 schtasks /create /ru "SYSTEM" /tn "Unified Hosts AutoUpdate" /xml "%XML%"
+del "%XML%"
 exit /b
 
 rem Flush the DNS cache
