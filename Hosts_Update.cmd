@@ -84,10 +84,10 @@ rem If there is, ask if they want to keep it
 if not !QUIET!==1 (
 	if exist "%TASKER%" (
 		set TASK=0
-		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified Hosts AutoUpdate"') do set TASK=1
+		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified.Hosts.AutoUpdate"') do set TASK=1
 		if !TASK!==1 (
 			echo You currently have a scheduled task already in place
-			choice /m "Would you like to keep it?"
+			choice.exe /m "Would you like to keep it?"
 			if !errorlevel!==2 schtasks /delete /tn "Unified Hosts AutoUpdate" /f
 		)
 	) else (
@@ -141,7 +141,7 @@ rem Check to see if the file is null-terminating before appending extra white sp
 if !MARKED!==0 (
 	echo The Unified Hosts has not yet been marked in your local hosts file
 	if not !QUIET!==1 (
-		choice /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
+		choice.exe /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
 		if !ERRORLEVEL!==2 goto Mark
 	)
 	for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
@@ -154,9 +154,9 @@ if !MARKED!==0 (
 if !MARKED!==2 (
 	echo The Unified Hosts is already installed in your local hosts file
 	if not !QUIET!==1 (
-		choice /M "Would you like to continue to update it?"
+		choice.exe /M "Would you like to continue to update it?"
 		if !errorlevel!==2 (
-			choice /M "Would you like to remove the Unified Hosts from your local hosts file?"
+			choice.exe /M "Would you like to remove the Unified Hosts from your local hosts file?"
 			if !errorlevel!==1 (
 				set REMOVE=1
 				call :File
@@ -211,7 +211,7 @@ rem If the remote and local dates and URLs are not the same, update
 if "%OLD%"=="%NEW%" (
 	if !QUIET!==1 exit
 	echo You already have the latest version.
-	choice /M "Would you like to update anyway?"
+	choice.exe /M "Would you like to update anyway?"
 	if !errorlevel!==2 exit
 ) else echo A new Unified Hosts update is available^^!
 
@@ -223,26 +223,26 @@ if not !QUIET!==1 (
 	if "%URL:~-6%"=="/hosts" (
 		echo Your current preset is to use the following Unified Hosts:
 		echo %URL%
-		choice /m "Would you like to just stick with that?"
+		choice.exe /m "Would you like to just stick with that?"
 		if !errorlevel!==1 goto Skip_Choice
 	)
 
 	echo The Unified Hosts will automatically block malware and adware.
-	choice /m "Would you also like to block other categories?"
+	choice.exe /m "Would you also like to block other categories?"
 	if !errorlevel!==1 (
 
 		set CAT=
 
-		choice /m "Would you also like to block fake news?"
+		choice.exe /m "Would you also like to block fake news?"
 		if !errorlevel!==1 set CAT=_fakenews_
 
-		choice /m "Would you also like to block gambling?"
+		choice.exe /m "Would you also like to block gambling?"
 		if !errorlevel!==1 set CAT=!CAT!_gambling_
 
-		choice /m "Would you also like to block porn?"
+		choice.exe /m "Would you also like to block porn?"
 		if !errorlevel!==1 set CAT=!CAT!_porn_
 
-		choice /m "Would you also like to block social?"
+		choice.exe /m "Would you also like to block social?"
 		if !errorlevel!==1 set CAT=!CAT!_social_
 
 		if not "!CAT!"=="" (
@@ -271,7 +271,7 @@ if not !QUIET!==1 (
 		echo In your task scheduler, schedule a task to execute this script
 		echo Following the script's path, send the URL of the blacklist you want:
 		echo "%~0" %URL%
-		choice /m "Would you like to open the Task Scheduler now?"
+		choice.exe /m "Would you like to open the Task Scheduler now?"
 		if !errorlevel!==1 start taskschd.msc
 	)
 	goto Notepad
@@ -325,7 +325,7 @@ exit /b
 rem Schedule task function
 :Schedule
 echo You don't yet have a scheduled task to automatically update daily
-choice /m "Would you like to create a scheduled task now?"
+choice.exe /m "Would you like to create a scheduled task now?"
 if !errorlevel!==2 exit /b
 (
 	echo ^<?xml version="1.0" encoding="UTF-16"?^>
@@ -388,7 +388,7 @@ exit /b
 
 rem Ask to see hosts file before exiting
 :Notepad
-choice /m "Would you like to open your current hosts file before exiting?"
+choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==1 start notepad "%HOSTS%"
 exit
 
