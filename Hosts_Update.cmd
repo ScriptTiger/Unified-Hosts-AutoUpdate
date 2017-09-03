@@ -17,7 +17,7 @@ rem Set Resource and target locations
 set VERSION=%~dp0VERSION
 set IGNORE=%~dp0ignore.txt
 set README=%~dp0README.md
-set SELF=%~0
+set SELF=%~f0
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
 set WGETP=%~dp0wget\x!PROCESSOR_ARCHITECTURE:~-2!\wget.exe
 set WGET="%WGETP%" -O- -q -t 0 --retry-connrefused -c -T 0
@@ -50,6 +50,21 @@ if not exist "%WGETP%" goto Wget
 rem Begin version checks
 echo Checking for script updates...
 
+rem Grab local script version
+set /p OLD=<"%VERSION%"
+
+rem If script updates are disabled, skip to the next step
+if /i "%OLD:~-1%"=="X" (
+	echo Script updates currently disabled.
+	goto Skip_Script_Update
+)
+
+rem Strip out emergency status if present in local version
+if "%OLD:~,1%"=="X" (
+	set OLD=%OLD:~1%
+	echo !OLD!>"%VERSION%"
+)
+
 rem Grab remote script version
 rem On error, report connectivity problem
 (for /f %%0 in ('%WGET% %GH%/VERSION') do set NEW=%%0) || goto Connectivity
@@ -63,20 +78,14 @@ if "%NEW:~,1%"=="X" (
 	exit
 )
 
-rem Grab local script version
-set /p OLD=<"%VERSION%"
-
-rem Strip out emergency status if present in local version
-if "%OLD:~,1%"=="X" (
-	echo %OLD:~1%>"%VERSION%"
-)
-
 rem If the versions don't match, automatically update and continue with updated script
 if not "%OLD%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&timeout /t 3 /nobreak > nul&"%~0" /U
 ) else echo Your script is up to date
+
+:Skip_Script_Update
 
 rem Check to see if the Windows version is compatible with the scripted scheduler
 rem Check to see if there is currently a scheduled update task

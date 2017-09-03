@@ -25,6 +25,10 @@ Also, if you send your prefered URL to the script as a parameter, it will bypass
 
 Because no backup of your local hosts file is needed, entries in the Unified Hosts relating to the localhost and other loopback addresses have been removed to prevent possible conflict with preexisting entries. No backup is needed because this script implements the Unified Hosts within opening and closing tags to clearly segment it from the user's preexisting entries and allow the script to know what area of the file to overwrite during an update or remove during removal.
 
+If you are deploying the update script across an organization via a shared network location and group policies, edit the "VERSION" file by adding an X to the end of the version number like this:  
+1.10X  
+This will disable the script from checking for script updates and attempting to update itself. This does not affect updates to the hosts file or whatever scheduled tasks you may have in place, this strictly disables the Hosts_Update.cmd from updating itself within the shared network location which remote system accounts running the scheduled tasks may not have write access to.
+
 **This script is in active development, so please share your feedback on what you like and don't like so we know what direction to take and don't inadvertently make things worse**
 
 If you would like to show your support for ScriptTiger, check out the Patreon page to find out how:  
