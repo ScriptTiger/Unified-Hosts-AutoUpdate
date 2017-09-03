@@ -55,7 +55,7 @@ set /p OLD=<"%VERSION%"
 
 rem If script updates are disabled, skip to the next step
 if /i "%OLD:~-1%"=="X" (
-	echo Script updates currently disabled.
+	echo Script updates currently disabled
 	goto Skip_Script_Update
 )
 
@@ -82,7 +82,7 @@ rem If the versions don't match, automatically update and continue with updated 
 if not "%OLD%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
-	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%~0"&timeout /t 3 /nobreak > nul&"%~0" /U
+	timeout /t 3 /nobreak > nul&%WGET% %GH%/Hosts_Update.cmd | more > "%SELF%"&timeout /t 3 /nobreak > nul&"%SELF%" /U
 ) else echo Your script is up to date
 
 :Skip_Script_Update
