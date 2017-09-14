@@ -99,9 +99,7 @@ if not !QUIET!==1 (
 			choice.exe /m "Would you like to keep it?"
 			if !errorlevel!==2 schtasks /delete /tn "Unified Hosts AutoUpdate" /f
 		)
-	) else (
-		set TASK=2
-	)
+	) else set TASK=2
 )
 
 rem If the ignore list doesn't exist, make one
