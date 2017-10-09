@@ -167,7 +167,7 @@ if !MARKED!==2 (
 			if !errorlevel!==1 (
 				set REMOVE=1
 				call :File
-				echo The Unified Host has been removed
+				echo The Unified Hosts has been removed
 				call :Flush
 				goto Notepad
 			)
