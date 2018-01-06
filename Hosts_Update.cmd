@@ -404,7 +404,7 @@ rem Error handling functions
 :Connectivity
 echo.
 echo This script cannot connect to the Internet^^!
-echo This script requires and active Internet connection to update your hosts file^^!
+echo This script requires an active Internet connection to update your hosts file^^!
 if not !QUIET!==1 pause
 exit
 
