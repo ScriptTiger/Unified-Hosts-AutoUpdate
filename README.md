@@ -1,3 +1,5 @@
+[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/ScriptTiger)
+
 # Unified Hosts AutoUpdate
 Quickly and easily install, unsinstall, and set up automatic updates for any of Steven Black's unified hosts files.
 
