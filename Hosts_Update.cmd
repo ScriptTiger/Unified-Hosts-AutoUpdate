@@ -341,7 +341,7 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 		if /i "%%b"=="#### END UNIFIED HOSTS ####" (
 			if not !REMOVE!==1 (
 				echo #
-				type %CUSTOM%
+				type "%CUSTOM%"
 				echo %%b
 			)
 			set WRITE=1
