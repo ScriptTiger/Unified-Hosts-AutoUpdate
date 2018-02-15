@@ -16,6 +16,7 @@ setlocal ENABLEDELAYEDEXPANSION
 rem Set Resource and target locations
 set VERSION=%~dp0VERSION
 set IGNORE=%~dp0ignore.txt
+set CUSTOM=%~dp0custom.txt
 set README=%~dp0README.md
 set SELF=%~f0
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
@@ -121,13 +122,32 @@ if not exist "%IGNORE%" (
 	) > "%IGNORE%"
 )
 
-rem Grab hash of current ignore list and hash recorded in hosts file
+rem If the custom list doesn't exist, make one
+if not exist "%CUSTOM%" (
+	(
+		echo # Custom entries managed by ScriptTiger's Unified Hosts AutoUpdate
+		echo # These custom entries are in standard hosts file format
+		echo #
+		echo #	102.54.94.97	rhino.acme.com
+		echo #	38.25.63.10	x.acme.com
+		echo #	127.0.0.1	localhost
+		echo #	::1		localhost
+		echo #	0.0.0.0		block.me
+	) > "%CUSTOM%"
+)
+
+rem Grab hash of current ignore and custom list and hash recorded in hosts file
 if exist "%HASHER%" (
 	set HASH=1
 	for /f %%0 in ('certutil -hashfile "%IGNORE%" md5 ^| findstr /v :') do set NEWIGNORE=%%0
 	for /f "tokens=1,2 delims=:" %%0 in ('findstr /b #.Ignore.list: "%HOSTS%"') do (
 		set OLDIGNORE=%%1
 		set OLDIGNORE=!OLDIGNORE:~1!
+	)
+	for /f %%0 in ('certutil -hashfile "%CUSTOM%" md5 ^| findstr /v :') do set NEWCUSTOM=%%0
+	for /f "tokens=1,2 delims=:" %%0 in ('findstr /b #.Custom.list: "%HOSTS%"') do (
+		set OLDCUSTOM=%%1
+		set OLDCUSTOM=!OLDCUSTOM:~1!
 	)
 ) else set HASH=0
 
@@ -208,9 +228,9 @@ for /f "tokens=*" %%0 in (
 	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
 )
 
-rem If the ignore list is not applied to the hosts file, upate
-if !HASH!==1 if not "!NEWIGNORE!"=="!OLDIGNORE!" (
-	echo Your current ignore list has not yet been applied to your hosts file
+rem If the ignore or custom list is not applied to the hosts file, upate
+if !HASH!==1 if not "!NEWIGNORE!!NEWCUSTOM!"=="!OLDIGNORE!!OLDCUSTOM!" (
+	echo Your current ignore or custom list has not yet been applied to your hosts file
 	goto Update
 )
 
@@ -306,7 +326,10 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 					echo %%b
 					echo # Managed by ScriptTiger's Unified Hosts AutoUpdate
 					echo # https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
-					if !HASH!==1 echo # Ignore list: %NEWIGNORE%
+					if !HASH!==1 (
+						echo # Ignore list: %NEWIGNORE%
+						echo # Custom list: %NEWCUSTOM%
+					)
 					echo #
 					for /f "tokens=*" %%0 in (
 						'^(%WGET% %URL% ^| findstr /l /v /g:"%IGNORE%"^)'
@@ -316,7 +339,11 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 			)
 		)
 		if /i "%%b"=="#### END UNIFIED HOSTS ####" (
-			if not !REMOVE!==1 echo %%b
+			if not !REMOVE!==1 (
+				echo #
+				type %CUSTOM%
+				echo %%b
+			)
 			set WRITE=1
 		)
 	)
