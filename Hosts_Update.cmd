@@ -310,6 +310,7 @@ rem File writing function
 
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
+	
 
 rem Rewrite the hosts file to a temporary file and inject new Unified Hosts after #### BEGIN UNIFIED HOSTS ####
 rem Filter Unified Hosts to remove white space and entries from ignore list
@@ -342,6 +343,8 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 			if not !REMOVE!==1 (
 				echo #
 				type "%CUSTOM%"
+				for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%CUSTOM%"') do set NTF=%%1
+				if not "!NTF!"=="" echo.
 				echo %%b
 			)
 			set WRITE=1
