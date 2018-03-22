@@ -10,8 +10,6 @@ This AutoUpdate project is maintained by ScriptTiger: https://github.com/ScriptT
 
 The Unified Hosts project is maintained by Steven Black: https://github.com/StevenBlack/hosts
 
-Wget is also a component to this project licensed separately in accordance with its attached documentation.
-
 Further project contributors are noted with their contributions in the Unified Hosts data, both available online from Steven Black's project as well as in the data injected into the local hosts file by this script, as it is downloaded directly from Steven Black's most recently pre-generated Unified Hosts files.
 
 You can download this repo from the below link to get started:  
