@@ -374,6 +374,8 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 rem Wait some time to make sure all the processes are done accessing the hosts
 rem Overwrite the old hosts with the new one
 timeout /t 3 /nobreak > nul
+
+:Write
 copy "%CHOSTS%" "%HOSTS%" /y > nul
 
 rem Make sure the hosts file was placed correctly and take action accordingly
@@ -388,6 +390,10 @@ if !errorlevel!==0 (
 	echo The two most common causes are:
 	echo 1.] It is being used by another application
 	echo 2.] It is intentionally locked by an antivirus or similar application
+	if not !QUIET!==1 (
+		choice.exe /m "Would you like to try writing to your hosts file again?"
+		if !errorlevel!==1 goto Write
+	)
 )
 exit /b
 
