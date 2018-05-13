@@ -158,12 +158,14 @@ if not exist "%CUSTOM%" (
 rem Grab hash of current ignore and custom list and hash recorded in hosts file
 if exist "%HASHER%" (
 	set HASH=1
-	for /f %%0 in ('certutil -hashfile "%IGNORE%" md5 ^| findstr /v :') do set NEWIGNORE=%%0
+	for /f "tokens=*" %%0 in ('certutil -hashfile "%IGNORE%" MD5 ^| findstr /v :') do set NEWIGNORE=%%0
+	set NEWIGNORE=!NEWIGNORE: =!
 	for /f "tokens=1,2 delims=:" %%0 in ('findstr /b #.Ignore.list: "%HOSTS%"') do (
 		set OLDIGNORE=%%1
 		set OLDIGNORE=!OLDIGNORE:~1!
 	)
-	for /f %%0 in ('certutil -hashfile "%CUSTOM%" md5 ^| findstr /v :') do set NEWCUSTOM=%%0
+	for /f "tokens=*" %%0 in ('certutil -hashfile "%CUSTOM%" MD5 ^| findstr /v :') do set NEWCUSTOM=%%0
+	set NEWCUSTOM=!NEWCUSTOM: =!
 	for /f "tokens=1,2 delims=:" %%0 in ('findstr /b #.Custom.list: "%HOSTS%"') do (
 		set OLDCUSTOM=%%1
 		set OLDCUSTOM=!OLDCUSTOM:~1!
