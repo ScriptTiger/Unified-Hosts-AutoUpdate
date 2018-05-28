@@ -28,6 +28,7 @@ set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 set TASKER=%SYSTEMROOT%\System32\schtasks.exe
 set HASHER=%SYSTEMROOT%\System32\certutil.exe
 set REMOVE=0
+set NET=1
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
@@ -84,7 +85,8 @@ if "%OLD:~,1%"=="X" (
 
 rem Grab remote script version
 rem On error, report connectivity problem
-%BITS_FROM% %GH%/VERSION %BITS_TO% "%CTEMP%" > nul || goto Connectivity
+%BITS_FROM% %GH%/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
+if %NET%==0 goto Skip_Script_Update
 set /p NEW=<"%CTEMP%"
 
 rem Check for emergency stop status
@@ -239,6 +241,8 @@ for /f "tokens=*" %%0 in (
 rem If the markings are there but no Unified Hosts, skip the rest of the check and continue to update
 if "%OLD%"=="NUL" goto Update
 
+if %NET%==0 goto Skip_Hosts_Checking
+
 rem Grab date and URL from remote Unified Hosts
 %BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
 for /f "tokens=*" %%0 in (
@@ -262,6 +266,8 @@ if "%OLD%"=="%NEW%" (
 	choice.exe /M "Would you like to update anyway?"
 	if !errorlevel!==2 goto Exit
 ) else echo A new Unified Hosts update is available^^!
+
+:Skip_Hosts_Checking
 
 rem Function to update current local hosts with current Unified Hosts
 :Update
@@ -306,9 +312,13 @@ if not "%URL:~-6%"=="/hosts" set URL=%BASE%/hosts
 
 :Skip_Choice
 
+if %NET%==0 goto Skip_Hosts_Update
+
 echo Updating the hosts file...
 call :File
 call :Flush
+
+:Skip_Hosts_Update
 
 if not !QUIET!==1 (
 	if !TASK!==0 call :Schedule
@@ -479,10 +489,13 @@ rem Error handling functions
 
 :Connectivity
 echo.
-echo This script cannot connect to the Internet^^!
-echo This script requires an active Internet connection to update your hosts file^^!
-if not !QUIET!==1 pause
-goto Exit
+echo This script cannot connect to the Internet^^! 
+if !QUIET!==1 exit
+echo You are either not connected or BITS does not have permission.
+echo If BITS does not have permission, daily automatic updates will still work.
+echo BITS permissions only affect updating interactively on-demand with this script.
+set NET=0
+exit /b
 
 :BITS
 echo BITS cannot be found
