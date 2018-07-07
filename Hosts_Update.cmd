@@ -57,7 +57,7 @@ if %BITS% geq 2 (
 	set BITS_TO= -destination
 )
 if %BITS%==1 (
-	set BITS_FROM=bitsadmin /transfer "" 
+	set BITS_FROM=bitsadmin /transfer ""
 	set BITS_TO=
 )
 if %BITS%==0 goto BITS
@@ -475,7 +475,11 @@ exit /b
 rem Ask to see hosts file before exiting
 :Notepad
 choice.exe /m "Would you like to open your current hosts file before exiting?"
-if !errorlevel!==1 start notepad "%HOSTS%"
+if !errorlevel!==1 (
+	for /f "tokens=3" %%a in ('reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID') do set PROGID=%%a
+	for /f "tokens=2 delims==" %%a in ('ftype !PROGID!') do set CMDVIEWTEXT=%%a
+	for /f "tokens=* usebackq" %%a in (`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`) do (start "" %%~a || start notepad %HOSTS%)
+)
 goto Exit
 
 :Exit
@@ -489,7 +493,7 @@ rem Error handling functions
 
 :Connectivity
 echo.
-echo This script cannot connect to the Internet^^! 
+echo This script cannot connect to the Internet^^!
 if !QUIET!==1 exit
 echo You are either not connected or BITS does not have permission.
 echo If BITS does not have permission, daily automatic updates will still work.
