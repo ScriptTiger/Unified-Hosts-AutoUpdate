@@ -45,6 +45,7 @@ if "%1"=="/U" (
 	if not "%1"=="" (
 		set URL=%1
 		set QUIET=1
+		if not "%2"=="" set NEWCOMP=%2
 	) else set QUIET=0
 )
 
@@ -174,6 +175,14 @@ if exist "%HASHER%" (
 	)
 ) else set HASH=0
 
+rem If the compression wasn't sent as a parameter, grab the preset compression level from the local hosts file, or default to 1
+set OLDCOMP=1
+for /f "tokens=1,2 delims=:" %%0 in ('findstr /b #.Compression: "%HOSTS%"') do (
+	set OLDCOMP=%%1
+	set OLDCOMP=!OLDCOMP:~1!
+)
+if "%NEWCOMP%"=="" set NEWCOMP=%OLDCOMP%
+
 rem Initialize MARKED to 0 for no markings yet verified
 set MARKED=0
 
@@ -253,9 +262,9 @@ for /f "tokens=*" %%0 in (
 	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
 )
 
-rem If the ignore or custom list is not applied to the hosts file, upate
-if !HASH!==1 if not "!NEWIGNORE!!NEWCUSTOM!"=="!OLDIGNORE!!OLDCUSTOM!" (
-	echo Your current ignore or custom list has not yet been applied to your hosts file
+rem If the ignore list, custom list, or compression level is not applied to the hosts file, upate
+if !HASH!==1 if not "!NEWIGNORE!!NEWCUSTOM!!NEWCOMP!"=="!OLDIGNORE!!OLDCUSTOM!!OLDCOMP!" (
+	echo Your current ignore list, custom list, or compression level needs to be applied.
 	goto Update
 )
 
@@ -312,6 +321,22 @@ if not "%URL:~-6%"=="/hosts" set URL=%BASE%/hosts
 
 :Skip_Choice
 
+if not !QUIET!==1 (
+	echo Your hosts file can be from 1 to 9 domains per line.
+	echo 1 is standard, more than 1 is a level of compression.
+	echo If you choose a level of compression, please expect the update to take longer.
+	echo Your current compression level is %OLDCOMP%.
+	choice.exe /m "Would you like to just stick with that?"
+	if !errorlevel!==1 (
+		set NEWCOMP=%OLDCOMP%
+		goto Skip_Choice2
+	)
+	choice.exe /c 123456789 /n /m "New compression level?"
+	set NEWCOMP=!errorlevel!
+)
+
+:Skip_Choice2
+
 if %NET%==0 goto Skip_Hosts_Update
 
 echo Updating the hosts file...
@@ -343,6 +368,21 @@ if not !REMOVE!==1 %BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
 
+rem Categorize line as comment of domain
+set TYPE=
+
+rem Previous line category
+set PTYPE=
+
+rem If compression is enabled, don't compress until the end of the Unified Hosts header
+set COUNT1=0
+
+rem Count domains while building globs
+set COUNT2=0
+
+rem Variable to store globbed line
+set GLOB=
+
 rem Rewrite the hosts file to a temporary file and inject new Unified Hosts after #### BEGIN UNIFIED HOSTS ####
 rem Filter Unified Hosts to remove white space and entries from ignore list
 (
@@ -361,11 +401,22 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 					if !HASH!==1 (
 						echo # Ignore list: %NEWIGNORE%
 						echo # Custom list: %NEWCUSTOM%
+						echo # Compression: %NEWCOMP%
 					)
 					echo #
 					for /f "tokens=*" %%0 in (
 						'findstr /l /v /g:"%IGNORE%" "%CTEMP%"'
-					) do @echo %%0
+					) do @(
+						if "%%0"=="# Project releases: https://github.com/StevenBlack/hosts/releases" set COUNT1=1
+						if !COUNT1! geq 1 (
+							if !NEWCOMP! geq 2 (
+								set LINE=%%0
+								call :Compress
+							) else echo %%0
+						) else echo %%0
+					)
+					if "!PTYPE!"=="COMMENT" echo !GLOB:~1!
+					if "!PTYPE!"=="DOMAIN" echo 0.0.0.0!GLOB!
 				)
 				set WRITE=0
 			)
@@ -407,6 +458,36 @@ if !errorlevel!==0 (
 		if !errorlevel!==1 goto Write
 	)
 )
+exit /b
+
+rem Compression function
+:Compress
+if "!LINE:~,1!"=="#" set TYPE=COMMENT
+if "!LINE:~,8!"=="0.0.0.0 " set TYPE=DOMAIN
+if not "!TYPE!"=="!PTYPE!" (
+	if "!GLOB:~,2!"==" #" (
+		echo !GLOB:~1!
+	) else (
+		if not "!GLOB!"=="" echo 0.0.0.0!GLOB!
+	)
+	set COUNT2=0
+	set GLOB=
+)
+if "!TYPE!"=="COMMENT" (
+	set GLOB=!GLOB! !LINE!
+	set COUNT2=0
+)
+if "!TYPE!" == "DOMAIN" (
+	set GLOB=!GLOB! !LINE:~8!
+	set /a COUNT2=!COUNT2!+1
+	if !COUNT2!==!NEWCOMP! (
+		echo 0.0.0.0!GLOB!
+		set GLOB=
+		set COUNT2=0
+	)
+)
+set PTYPE=!TYPE!
+set TYPE=
 exit /b
 
 rem Schedule task function
@@ -476,9 +557,17 @@ rem Ask to see hosts file before exiting
 :Notepad
 choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==1 (
-	for /f "tokens=3" %%a in ('reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID') do set PROGID=%%a
-	for /f "tokens=2 delims==" %%a in ('ftype !PROGID!') do set CMDVIEWTEXT=%%a
-	for /f "tokens=* usebackq" %%a in (`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`) do (start "" %%~a || start notepad %HOSTS%)
+	for /f "tokens=3" %%a in (
+		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
+	) do set PROGID=%%a
+	for /f "tokens=2 delims==" %%a in (
+		'ftype !PROGID!'
+	) do set CMDVIEWTEXT=%%a
+	for /f "tokens=* usebackq" %%a in (
+		`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`
+	) do (
+		start "" %%~a || start notepad %HOSTS%
+	)
 )
 goto Exit
 

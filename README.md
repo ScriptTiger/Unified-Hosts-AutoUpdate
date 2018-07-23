@@ -1,10 +1,7 @@
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/ScriptTiger)
 
 # Unified Hosts AutoUpdate
-Quickly and easily install, unsinstall, and set up automatic updates for any of Steven Black's unified hosts files.
-
-**If you edited your custom.txt between February 16, 2018 and March 12, 2018 and have experienced issues with your hosts file not being updated proplerly, please reference the following issue:  
-https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/issues/7**
+Quickly and easily install, uninstall, and set up automatic updates for any of Steven Black's unified hosts files.
 
 This AutoUpdate project is maintained by ScriptTiger: https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 
@@ -17,6 +14,8 @@ https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/archive/master.zip
 
 Extract the contents to the same directory and run the Hosts_Update.cmd script. There is also an option to remove the Unified Hosts from your local hosts file. In the event critical changes are made to either the AutoUpdate repo or to the Unified Hosts repo, this script is also capable of automatically updating itself.
 
+**If you are using a Windows operating system and experience performance problems after running this script, please try adjusting your compression level to one that best suits your needs.**
+
 If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. If you want to ignore all .de websites, you can simply put:  
 .de  
 If you want to ignore all subdomains of google.com, you can put:  
@@ -26,7 +25,7 @@ If you want to ignore all google subdomains in any top level domain:
 
 If you would also like to manage custom hosts file entries with this script, you can do so using the custom.txt. As this script does not alter custom entries in the hosts file itself, this is simply an option to make things easier if you would prefer to manage custom entries this way rather than manually managing them in the hosts file.
 
-Also, if you send your prefered URL to the script as a parameter, it will bypass all the prompts and automatically install/update the Unified Hosts in the local hosts file. This is useful for things like scheduling a task to update your Unified Hosts daily or weekly, etc. You can even update yourt hosts randomly throughout the day at certain times to switch between Unified Hosts to, for example, only allow social in the evenings or on the weekends. If you do decide to make a scheduled task, also remember the account issuing the task must still have administrative privileges to be able to write to the local hosts file.
+Also, if you send your preferred URL to the script as a parameter, it will bypass all the prompts and automatically install/update the Unified Hosts in the local hosts file. This is useful for things like scheduling a task to update your Unified Hosts daily or weekly, etc. You can even update your hosts randomly throughout the day at certain times to switch between Unified Hosts to, for example, only allow social in the evenings or on the weekends. If you do decide to make a scheduled task, also remember the account issuing the task must still have administrative privileges to be able to write to the local hosts file. You can optionally add your preferred compression level as a second parameter, as well, but this must always accompany a URL as the first parameter.
 
 Because no backup of your local hosts file is needed, entries in the Unified Hosts relating to the localhost and other loopback addresses have been removed to prevent possible conflict with preexisting entries. No backup is needed because this script implements the Unified Hosts within opening and closing tags to clearly segment it from the user's preexisting entries and allow the script to know what area of the file to overwrite during an update or remove during removal.
 
