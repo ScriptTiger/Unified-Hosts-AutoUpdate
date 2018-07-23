@@ -368,7 +368,7 @@ if not !REMOVE!==1 %BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
 
-rem Categorize line as comment of domain
+rem Categorize line as comment or domain
 set TYPE=
 
 rem Previous line category
