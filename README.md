@@ -14,7 +14,7 @@ https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/archive/master.zip
 
 Extract the contents to the same directory and run the Hosts_Update.cmd script. There is also an option to remove the Unified Hosts from your local hosts file. In the event critical changes are made to either the AutoUpdate repo or to the Unified Hosts repo, this script is also capable of automatically updating itself.
 
-**If you are using a Windows operating system and experience performance problems after running this script, please try adjusting your compression level to one that best suits your needs.**
+**If you experience problems with performance or seemingly unrelated networking issues after running this script, please try adjusting your compression level to one that best suits your needs.**
 
 If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. If you want to ignore all .de websites, you can simply put:  
 .de  
