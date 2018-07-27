@@ -539,7 +539,7 @@ if !errorlevel!==2 exit /b
 	echo ^<Actions Context="Author"^>
 	echo ^<Exec^>
 	echo ^<Command^>"%SELF%"^</Command^>
-	echo ^<Arguments^>%URL%^</Arguments^>
+	echo ^<Arguments^>%URL% %NEWCOMP%^</Arguments^>
 	echo ^</Exec^>
 	echo ^</Actions^>
 	echo ^</Task^>
