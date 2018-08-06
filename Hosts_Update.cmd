@@ -556,7 +556,9 @@ exit /b
 rem Ask to see hosts file before exiting
 :Notepad
 choice.exe /m "Would you like to open your current hosts file before exiting?"
-if !errorlevel!==1 (
+if !errorlevel!==2 goto Exit
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID > nul
+if !errorlevel!==0 (
 	for /f "tokens=3" %%a in (
 		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
 	) do set PROGID=%%a
@@ -565,10 +567,8 @@ if !errorlevel!==1 (
 	) do set CMDVIEWTEXT=%%a
 	for /f "tokens=* usebackq" %%a in (
 		`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`
-	) do (
-		start "" %%~a || start notepad %HOSTS%
-	)
-)
+	) do start "" %%~a
+) else start notepad %HOSTS%
 goto Exit
 
 :Exit
