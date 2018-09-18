@@ -404,16 +404,18 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 						echo # Compression: %NEWCOMP%
 					)
 					echo #
-					for /f "tokens=*" %%0 in (
+					for /f "tokens=1,2*" %%0 in (
 						'findstr /l /v /g:"%IGNORE%" "%CTEMP%"'
 					) do @(
-						if "%%0"=="# Project releases: https://github.com/StevenBlack/hosts/releases" set COUNT1=1
+						set WORD1=%%0
+						set WORD2=%%1
+						set LINE=%%0 %%1 %%2
+						if "!LINE!"=="# Project releases: https://github.com/StevenBlack/hosts/releases" set COUNT1=1
 						if !COUNT1! geq 1 (
 							if !NEWCOMP! geq 2 (
-								set LINE=%%0
 								call :Compress
-							) else echo %%0
-						) else echo %%0
+							) else echo !LINE!
+						) else echo !LINE!
 					)
 					if "!PTYPE!"=="COMMENT" echo !GLOB:~1!
 					if "!PTYPE!"=="DOMAIN" echo 0.0.0.0!GLOB!
@@ -462,8 +464,8 @@ exit /b
 
 rem Compression function
 :Compress
-if "!LINE:~,1!"=="#" set TYPE=COMMENT
-if "!LINE:~,8!"=="0.0.0.0 " set TYPE=DOMAIN
+if "!WORD1:~,1!"=="#" set TYPE=COMMENT
+if "!WORD1!"=="0.0.0.0" set TYPE=DOMAIN
 if not "!TYPE!"=="!PTYPE!" (
 	if "!GLOB:~,2!"==" #" (
 		echo !GLOB:~1!
@@ -478,7 +480,7 @@ if "!TYPE!"=="COMMENT" (
 	set COUNT2=0
 )
 if "!TYPE!" == "DOMAIN" (
-	set GLOB=!GLOB! !LINE:~8!
+	set GLOB=!GLOB! !WORD2!
 	set /a COUNT2=!COUNT2!+1
 	if !COUNT2!==!NEWCOMP! (
 		echo 0.0.0.0!GLOB!
