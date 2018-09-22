@@ -19,7 +19,7 @@ Extract the contents to the same directory and run the Hosts_Update.cmd script. 
 **If you're running Windows XP or Windows Sever 2003 and don't have Background Intelligent Transfer Service (BITS) installed, please visit the following link first to find out how to install it. BITS is REQUIRED by this script to function in order to eliminate the need for third-party applications and keep everything native to Microsot Windows.  
 https://support.microsoft.com/en-us/help/923845/an-update-package-for-background-intelligent-transfer-service-bits-is**
 
-If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. For example, if you want to block the `www.google.com` domain specifically, put this:  
+If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. For example, if you want to ignore the `www.google.com` domain specifically, put this:  
 `0.0.0.0 www.google.com`  
 If you want to ignore all .de websites, you can simply put:  
 `.de`  
