@@ -26,6 +26,7 @@ set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
 set CHOSTS=%CACHE%\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 set TASKER=%SYSTEMROOT%\System32\schtasks.exe
+set TN=Unified Hosts AutoUpdate
 set HASHER=%SYSTEMROOT%\System32\certutil.exe
 set REMOVE=0
 set NET=1
@@ -120,7 +121,7 @@ if not !QUIET!==1 (
 		if !TASK!==1 (
 			echo You currently have a scheduled task already in place
 			choice.exe /m "Would you like to keep it?"
-			if !errorlevel!==2 schtasks /delete /tn "Unified Hosts AutoUpdate" /f
+			if !errorlevel!==2 schtasks /delete /tn "%TN%" /f
 		)
 	) else set TASK=2
 )
@@ -546,7 +547,8 @@ if !errorlevel!==2 exit /b
 	echo ^</Actions^>
 	echo ^</Task^>
 ) > "%CTEMP%"
-schtasks /create /ru "SYSTEM" /tn "Unified Hosts AutoUpdate" /xml "%CTEMP%"
+schtasks /create /ru "SYSTEM" /tn "%TN%" /xml "%CTEMP%"
+set TASK=1
 exit /b
 
 rem Flush the DNS cache
@@ -557,6 +559,11 @@ exit /b
 
 rem Ask to see hosts file before exiting
 :Notepad
+
+rem If running in interactive offline mode and a scheduled task exists, skip opening notepad
+rem This will avoid conflicts when the task is run and tries to access the hosts file
+if not !QUIET!==1 if !NET!==0 if !TASK!==1 goto Exit
+
 choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==2 goto Exit
 reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID > nul
@@ -574,10 +581,16 @@ if !errorlevel!==0 (
 goto Exit
 
 :Exit
+
+rem Clean up temporary files
 if exist "%CACHE%" (
 	echo Cleaning temporary files...
 	rmdir /s /q "%CACHE%"
 )
+
+rem If running in interactive offline mode and a scheduled task exists, run the task now
+if not !QUIET!==1 if !NET!==0 if !TASK!==1 schtasks /run /tn "%TN%"
+
 exit
 
 rem Error handling functions
@@ -589,6 +602,7 @@ if !QUIET!==1 exit
 echo You are either not connected or BITS does not have permission.
 echo If BITS does not have permission, daily automatic updates will still work.
 echo BITS permissions only affect updating interactively on-demand with this script.
+echo If there is a scheduled task set, it will be run once this script completes.
 set NET=0
 exit /b
 
