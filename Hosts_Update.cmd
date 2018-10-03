@@ -14,7 +14,9 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Set Resource and target locations
-set CACHE=%TEMP%\Unified-Hosts-AutoUpdate
+set CACHE=Unified-Hosts-AutoUpdate
+set SCACHE=%SystemRoot%\TEMP\%CACHE%
+set CACHE=%TEMP%\%CACHE%
 set CTEMP=%CACHE%\ctemp
 set VERSION=%~dp0VERSION
 set IGNORE=%~dp0ignore.txt
@@ -120,8 +122,13 @@ if not !QUIET!==1 (
 		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified.Hosts.AutoUpdate"') do set TASK=1
 		if !TASK!==1 (
 			echo You currently have a scheduled task already in place
-			choice.exe /m "Would you like to keep it?"
-			if !errorlevel!==2 schtasks /delete /tn "%TN%" /f
+			choice.exe /m "Would you like to run the current task now?"
+			if !errorlevel!==1 (
+				call :Clear
+				goto Run
+			)
+			choice.exe /m "Would you like to keep the current task?"
+			if !errorlevel!==2 call :Unschedule
 		)
 	) else set TASK=2
 )
@@ -347,7 +354,15 @@ call :Flush
 :Skip_Hosts_Update
 
 if not !QUIET!==1 (
-	if !TASK!==0 call :Schedule
+	if !TASK!==1 (
+		echo You currently have a scheduled task already in place
+		echo Creating a new one will overwrite the previous task with your new settings
+		call :Schedule
+	)
+	if !TASK!==0 (
+		echo You don't have a scheduled task to automatically update daily
+		call :Schedule
+	)
 	if !TASK!==2 (
 		echo Your version of Windows isn't compatible with this script's task scheduler
 		echo In your task scheduler, schedule a task to execute this script
@@ -495,9 +510,9 @@ exit /b
 
 rem Schedule task function
 :Schedule
-echo You don't yet have a scheduled task to automatically update daily
-choice.exe /m "Would you like to create a scheduled task now?"
+choice.exe /m "Would you like to create a new scheduled task now?"
 if !errorlevel!==2 exit /b
+if !TASK!==1 call :Unschedule
 (
 	echo ^<?xml version="1.0" encoding="UTF-16"?^>
 	echo ^<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"^>
@@ -551,6 +566,11 @@ schtasks /create /ru "SYSTEM" /tn "%TN%" /xml "%CTEMP%"
 set TASK=1
 exit /b
 
+:Unschedule
+schtasks /delete /tn "%TN%" /f
+set TASK=0
+exit /b
+
 rem Flush the DNS cache
 :Flush
 echo Flushing local DNS cache...
@@ -560,9 +580,8 @@ exit /b
 rem Ask to see hosts file before exiting
 :Notepad
 
-rem If running in interactive offline mode and a scheduled task exists, skip opening notepad
-rem This will avoid conflicts when the task is run and tries to access the hosts file
-if not !QUIET!==1 if !NET!==0 if !TASK!==1 goto Exit
+rem If running in interactive offline mode and a scheduled task exists, run task before opening notepad
+if !NET!==0 if !TASK!==1 goto Run
 
 choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==2 goto Exit
@@ -580,18 +599,30 @@ if !errorlevel!==0 (
 ) else start notepad %HOSTS%
 goto Exit
 
+:Clear
+rem Clean up temporary files if they exist
+if not exist "%CACHE%" exit /b
+echo Cleaning temporary files...
+rmdir /s /q "%CACHE%"
+exit /b
+
 :Exit
-
-rem Clean up temporary files
-if exist "%CACHE%" (
-	echo Cleaning temporary files...
-	rmdir /s /q "%CACHE%"
-)
-
-rem If running in interactive offline mode and a scheduled task exists, run the task now
-if not !QUIET!==1 if !NET!==0 if !TASK!==1 schtasks /run /tn "%TN%"
-
+call :Clear
 exit
+
+rem Function for running a scheduled task from script before exiting
+:Run
+echo Activating update task...
+schtasks /run /tn "%TN%"
+echo Update task running...
+:Run_Wait
+timeout /t 5 /nobreak > nul
+if not exist "%SCACHE%" (
+	echo Update task has completed
+	set TASK=3
+	goto Notepad
+)
+goto Run_Wait
 
 rem Error handling functions
 
@@ -599,10 +630,8 @@ rem Error handling functions
 echo.
 echo This script cannot connect to the Internet^^!
 if !QUIET!==1 exit
-echo You are either not connected or BITS does not have permission.
-echo If BITS does not have permission, daily automatic updates will still work.
-echo BITS permissions only affect updating interactively on-demand with this script.
-echo If there is a scheduled task set, it will be run once this script completes.
+echo You are either not connected or BITS does not have permission
+echo You are now in interactive offline mode
 set NET=0
 exit /b
 
