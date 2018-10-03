@@ -23,7 +23,7 @@ set IGNORE=%~dp0ignore.txt
 set CUSTOM=%~dp0custom.txt
 set README=%~dp0README.md
 set SELF=%~f0
-set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate/master
+set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate
 set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
 set CHOSTS=%CACHE%\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
@@ -38,7 +38,7 @@ if "%1"=="/U" (
 	cls
 	echo The updated script has been loaded
 	echo %NEW%>"%VERSION%"
-	%BITS_FROM% %GH%/README.md %BITS_TO% "%CTEMP%"
+	%BITS_FROM% %GH%/%NEW%/README.md %BITS_TO% "%CTEMP%"
 	more "%CTEMP%" > "%README%"
 ) else (
 
@@ -89,7 +89,7 @@ if "%OLD:~,1%"=="X" (
 
 rem Grab remote script version
 rem On error, report connectivity problem
-%BITS_FROM% %GH%/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
+%BITS_FROM% %GH%/master/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
 if %NET%==0 goto Skip_Script_Update
 set /p NEW=<"%CTEMP%"
 
@@ -107,7 +107,7 @@ if not "%OLD%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul
-	%BITS_FROM% %GH%/Hosts_Update.cmd %BITS_TO% "%CTEMP%"
+	%BITS_FROM% %GH%/%NEW%/Hosts_Update.cmd %BITS_TO% "%CTEMP%"
 	more "%CTEMP%" > "%SELF%"&timeout /t 3 /nobreak > nul&"%SELF%" /U
 ) else echo Your script is up to date
 
