@@ -13,6 +13,9 @@ rem Check for admin rights, and exit if none present
 rem Enable delayed expansion to be used during for loops and other parenthetical groups
 setlocal ENABLEDELAYEDEXPANSION
 
+rem Script version number
+set V=1.20
+
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
 set SCACHE=%SystemRoot%\TEMP\%CACHE%
@@ -40,9 +43,10 @@ rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
 	cls
 	echo The updated script has been loaded
-	echo %NEW%>"%VERSION%"
+	echo %COMMIT%>"%VERSION%"
+	echo %NEW%>>"%VERSION%"
 	if exist "%README%" del /q "%README%"
-	%BITS_FROM% %GH%/%NEW%/README.md %BITS_TO% "%README%"
+	%BITS_FROM% %GH%/%COMMIT%/README.md %BITS_TO% "%README%"
 ) else (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
@@ -76,7 +80,14 @@ rem Begin version checks
 echo Checking for script updates...
 
 rem Grab local script version
-set /p OLD=<"%VERSION%"
+for /f "tokens=2 delims=:" %%0 in (
+	'findstr /n .* "%VESION%" ^| findstr /b 2:'
+) do @set OLD=%%0
+
+rem Grab local script commit
+for /f "tokens=2 delims=:" %%0 in (
+	'findstr /n .* "%VESION%" ^| findstr /b 1:'
+) do @set COMMIT=%%0
 
 rem If script updates are disabled, skip to the next step
 if /i "%OLD:~-1%"=="X" (
@@ -87,14 +98,22 @@ if /i "%OLD:~-1%"=="X" (
 rem Strip out emergency status if present in local version
 if "%OLD:~,1%"=="X" (
 	set OLD=%OLD:~1%
-	echo !OLD!>"%VERSION%"
+	echo %COMMIT%>"%VERSION%"
+	echo !OLD!>>"%VERSION%"
 )
 
-rem Grab remote script version
+rem Grab remote script VERSION file
 rem On error, report connectivity problem
 %BITS_FROM% %GH%/master/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
 if %NET%==0 goto Skip_Script_Update
-set /p NEW=<"%CTEMP%"
+rem Grab remote script version
+for /f "tokens=2 delims=:" %%0 in (
+	'findstr /n .* "%CTEMP%" ^| findstr /b 2:'
+) do @set NEW=%%0
+rem Grab remote script commit
+for /f "tokens=2 delims=:" %%0 in (
+	'findstr /n .* "%CTEMP%" ^| findstr /b 1:'
+) do @set COMMIT=%%0
 
 rem Check for emergency stop status
 if "%NEW:~,1%"=="X" (
@@ -106,11 +125,11 @@ if "%NEW:~,1%"=="X" (
 )
 
 rem If the versions don't match, automatically update and continue with updated script
-if not "%OLD%"=="%NEW%" (
+if not "%V%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul
-	%BITS_FROM% %GH%/%NEW%/Hosts_Update.cmd %BITS_TO% "%UPDATE%"
+	%BITS_FROM% %GH%/%COMMIT%/Hosts_Update.cmd %BITS_TO% "%UPDATE%"
 	timeout /t 3 /nobreak > nul
 	"%UPDATE%" /U
 ) else echo Your script is up to date
