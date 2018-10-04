@@ -616,11 +616,14 @@ if exist "%CACHE%" (
 	echo Cleaning temporary files...
 	rmdir /s /q "%CACHE%"
 )
+rem If not locked and a downloaded update is available, replace the old script with the new one and exit
 if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMD%"&ren "%UPDATE%" Hosts_Update.cmd&exit
 exit
 
 rem Function for running a scheduled task from script before exiting
 :Run
+rem Lock the running script from being replaced by an update during the triggered task
+rem Unlock later and replace running script with update if exists before exit
 echo lock > "%LOCK%"
 echo Activating update task...
 schtasks /run /tn "%TN%"
