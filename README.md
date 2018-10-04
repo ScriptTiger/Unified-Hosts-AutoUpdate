@@ -10,7 +10,8 @@ The Unified Hosts project is maintained by Steven Black: https://github.com/Stev
 Further project contributors are noted with their contributions in the Unified Hosts data, both available online from Steven Black's project as well as in the data injected into the local hosts file by this script, as it is downloaded directly from Steven Black's most recently pre-generated Unified Hosts files.
 
 You can download this repo from the below link to get started:  
-https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/archive/master.zip
+https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate/archive/master.zip  
+**There have been critical updates to how the script updates itself in order to make the process safer and more consistent. If your script is crashing or experiencing issues immediately after you execute it while it is trying to check its version, you will need to backup your ignore.txt and custom.txt and manually update your package either by redownloading the above ZIP file or using git.**
 
 Extract the contents to the same directory and run the Hosts_Update.cmd script. There is also an option to remove the Unified Hosts from your local hosts file. In the event critical changes are made to either the AutoUpdate repo or to the Unified Hosts repo, this script is also capable of automatically updating itself.
 
