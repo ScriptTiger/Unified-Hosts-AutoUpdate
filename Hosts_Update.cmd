@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.20
+set V=1.21
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -43,8 +43,7 @@ rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
 	cls
 	echo The updated script has been loaded
-	echo %COMMIT%>"%VERSION%"
-	echo %NEW%>>"%VERSION%"
+	echo %NEW% %COMMIT%>"%VERSION%"
 	if exist "%README%" del /q "%README%"
 	%BITS_FROM% %GH%/%COMMIT%/README.md %BITS_TO% "%README%"
 ) else (
@@ -79,15 +78,11 @@ if not exist "%CACHE%" md "%CACHE%"
 rem Begin version checks
 echo Checking for script updates...
 
-rem Grab local script version
-for /f "tokens=2 delims=:" %%0 in (
-	'findstr /n .* "%VERSION%" ^| findstr /b 2:'
-) do @set OLD=%%0
-
-rem Grab local script commit
-for /f "tokens=2 delims=:" %%0 in (
-	'findstr /n .* "%VERSION%" ^| findstr /b 1:'
-) do @set COMMIT=%%0
+rem Grab local version and commit
+for /f "tokens=1,2" %%0 in ("%VERSION%") do (
+	set OLD=%%0
+	set COMMIT=%%1
+)
 
 rem If script updates are disabled, skip to the next step
 if /i "%OLD:~-1%"=="X" (
@@ -98,22 +93,18 @@ if /i "%OLD:~-1%"=="X" (
 rem Strip out emergency status if present in local version
 if "%OLD:~,1%"=="X" (
 	set OLD=%OLD:~1%
-	echo %COMMIT%>"%VERSION%"
-	echo !OLD!>>"%VERSION%"
+	echo !OLD! %COMMIT%>"%VERSION%"
 )
 
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
 %BITS_FROM% %GH%/master/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
 if %NET%==0 goto Skip_Script_Update
-rem Grab remote script version
-for /f "tokens=2 delims=:" %%0 in (
-	'findstr /n .* "%CTEMP%" ^| findstr /b 2:'
-) do @set NEW=%%0
-rem Grab remote script commit
-for /f "tokens=2 delims=:" %%0 in (
-	'findstr /n .* "%CTEMP%" ^| findstr /b 1:'
-) do @set COMMIT=%%0
+rem Grab remote script version and commit
+for /f "tokens=1,2" %%0 in ("%CTEMP%") do (
+	set NEW=%%0
+	set COMMIT=%%1
+)
 
 rem Check for emergency stop status
 if "%NEW:~,1%"=="X" (
