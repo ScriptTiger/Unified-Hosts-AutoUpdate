@@ -22,6 +22,9 @@ set VERSION=%~dp0VERSION
 set IGNORE=%~dp0ignore.txt
 set CUSTOM=%~dp0custom.txt
 set README=%~dp0README.md
+set UPDATE=%~dp0Update.cmd
+set CMD=%~dp0Hosts_Update.cmd
+set LOCK=%~dp0lock
 set SELF=%~f0
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate
 set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
@@ -107,8 +110,9 @@ if not "%OLD%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul
-	%BITS_FROM% %GH%/%NEW%/Hosts_Update.cmd %BITS_TO% "%CTEMP%"
-	more "%CTEMP%" > "%SELF%"&timeout /t 3 /nobreak > nul&"%SELF%" /U
+	%BITS_FROM% %GH%/%NEW%/Hosts_Update.cmd %BITS_TO% "%UPDATE%"
+	timeout /t 3 /nobreak > nul
+	"%UPDATE%" /U
 ) else echo Your script is up to date
 
 :Skip_Script_Update
@@ -123,10 +127,7 @@ if not !QUIET!==1 (
 		if !TASK!==1 (
 			echo You currently have a scheduled task already in place
 			choice.exe /m "Would you like to run the current task now?"
-			if !errorlevel!==1 (
-				call :Clear
-				goto Run
-			)
+			if !errorlevel!==1 goto Run
 			choice.exe /m "Would you like to keep the current task?"
 			if !errorlevel!==2 call :Unschedule
 		)
@@ -556,7 +557,7 @@ if !TASK!==1 call :Unschedule
 	echo ^</Settings^>
 	echo ^<Actions Context="Author"^>
 	echo ^<Exec^>
-	echo ^<Command^>"%SELF%"^</Command^>
+	echo ^<Command^>"%CMD%"^</Command^>
 	echo ^<Arguments^>%URL% %NEWCOMP%^</Arguments^>
 	echo ^</Exec^>
 	echo ^</Actions^>
@@ -599,19 +600,18 @@ if !errorlevel!==0 (
 ) else start notepad %HOSTS%
 goto Exit
 
-:Clear
-rem Clean up temporary files if they exist
-if not exist "%CACHE%" exit /b
-echo Cleaning temporary files...
-rmdir /s /q "%CACHE%"
-exit /b
-
 :Exit
-call :Clear
+rem Clean up temporary files if they exist
+if exist "%CACHE%" (
+	echo Cleaning temporary files...
+	rmdir /s /q "%CACHE%"
+)
+if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMD%"&ren "%UPDATE%" Hosts_Update.cmd&exit
 exit
 
 rem Function for running a scheduled task from script before exiting
 :Run
+echo lock > "%LOCK%"
 echo Activating update task...
 schtasks /run /tn "%TN%"
 echo Update task running...
@@ -620,6 +620,7 @@ timeout /t 5 /nobreak > nul
 if not exist "%SCACHE%" (
 	echo Update task has completed
 	set TASK=3
+	del /q "%LOCK%"
 	goto Notepad
 )
 goto Run_Wait
