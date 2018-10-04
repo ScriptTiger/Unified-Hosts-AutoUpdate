@@ -41,8 +41,8 @@ if "%1"=="/U" (
 	cls
 	echo The updated script has been loaded
 	echo %NEW%>"%VERSION%"
-	%BITS_FROM% %GH%/%NEW%/README.md %BITS_TO% "%CTEMP%"
-	more "%CTEMP%" > "%README%"
+	if exist "%README%" del /q "%README%"
+	%BITS_FROM% %GH%/%NEW%/README.md %BITS_TO% "%README%"
 ) else (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
