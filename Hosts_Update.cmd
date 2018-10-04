@@ -79,7 +79,7 @@ rem Begin version checks
 echo Checking for script updates...
 
 rem Grab local version and commit
-for /f "tokens=1,2" %%0 in ("%VERSION%") do (
+for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
 	set OLD=%%0
 	set COMMIT=%%1
 )
@@ -101,7 +101,7 @@ rem On error, report connectivity problem
 %BITS_FROM% %GH%/master/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
 if %NET%==0 goto Skip_Script_Update
 rem Grab remote script version and commit
-for /f "tokens=1,2" %%0 in ("%CTEMP%") do (
+for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
 	set NEW=%%0
 	set COMMIT=%%1
 )
