@@ -81,12 +81,12 @@ echo Checking for script updates...
 
 rem Grab local script version
 for /f "tokens=2 delims=:" %%0 in (
-	'findstr /n .* "%VESION%" ^| findstr /b 2:'
+	'findstr /n .* "%VERSION%" ^| findstr /b 2:'
 ) do @set OLD=%%0
 
 rem Grab local script commit
 for /f "tokens=2 delims=:" %%0 in (
-	'findstr /n .* "%VESION%" ^| findstr /b 1:'
+	'findstr /n .* "%VERSION%" ^| findstr /b 1:'
 ) do @set COMMIT=%%0
 
 rem If script updates are disabled, skip to the next step
