@@ -1,6 +1,5 @@
 # Custom entries managed by ScriptTiger's Unified Hosts AutoUpdate
 # These custom entries are in standard hosts file format
-#
 #	102.54.94.97	rhino.acme.com
 #	38.25.63.10	x.acme.com
 #	127.0.0.1	localhost

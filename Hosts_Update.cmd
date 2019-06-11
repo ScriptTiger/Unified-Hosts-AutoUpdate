@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.22
+set V=1.23
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -153,13 +153,8 @@ if not exist "%IGNORE%" (
 		echo # To force changes now, run Hosts_Update.cmd with the "update anyway" option
 		echo # If you decide to delete the below entries, DO NOT delete these above comment lines
 		echo # If this file is left completely empty, the script will break
-		echo 127.0.0.1 localhost
-		echo 127.0.0.1 localhost.localdomain
-		echo 127.0.0.1 local
-		echo 255.255.255.255 broadcasthost
-		echo ::1 localhost
-		echo fe80::1%%lo0 localhost
-		echo 0.0.0.0 0.0.0.0
+		echo # Uncomment the below entry to allow the analytics.google.com domain
+		echo #0.0.0.0 analytics.google.com
 	) > "%IGNORE%"
 )
 
@@ -168,7 +163,6 @@ if not exist "%CUSTOM%" (
 	(
 		echo # Custom entries managed by ScriptTiger's Unified Hosts AutoUpdate
 		echo # These custom entries are in standard hosts file format
-		echo #
 		echo #	102.54.94.97	rhino.acme.com
 		echo #	38.25.63.10	x.acme.com
 		echo #	127.0.0.1	localhost
@@ -437,7 +431,7 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 						set WORD1=%%0
 						set WORD2=%%1
 						set LINE=%%0 %%1 %%2
-						if "!LINE!"=="# Project releases: https://github.com/StevenBlack/hosts/releases" set COUNT1=1
+						if "!LINE!"=="# Custom host records are listed here." set COUNT1=1
 						if !COUNT1! geq 1 (
 							if !NEWCOMP! geq 2 (
 								call :Compress

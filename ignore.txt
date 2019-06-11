@@ -3,10 +3,5 @@
 # To force changes now, run Hosts_Update.cmd with the "update anyway" option
 # If you decide to delete the below entries, DO NOT delete these above comment lines
 # If this file is left completely empty, the script will break
-127.0.0.1 localhost
-127.0.0.1 localhost.localdomain
-127.0.0.1 local
-255.255.255.255 broadcasthost
-::1 localhost
-fe80::1%lo0 localhost
-0.0.0.0 0.0.0.0
+# Uncomment the below entry to allow the analytics.google.com domain
+#0.0.0.0 analytics.google.com
