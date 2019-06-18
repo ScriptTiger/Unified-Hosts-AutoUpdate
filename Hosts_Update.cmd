@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.23
+set V=1.24
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -266,14 +266,16 @@ if "%OLD%"=="NUL" goto Update
 if %NET%==0 goto Skip_Hosts_Checking
 
 rem Grab date and URL from remote Unified Hosts
-%BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
-for /f "tokens=*" %%0 in (
-	'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
-) do (
-	set LINE=%%0
-	if "!LINE:~,8!"=="# Date: " set NEW=%%0
-	if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
-)
+if not "%URL%"=="" (
+	%BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
+	for /f "tokens=*" %%0 in (
+		'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
+	) do (
+		set LINE=%%0
+		if "!LINE:~,8!"=="# Date: " set NEW=%%0
+		if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
+	)
+) else set NEW=NUL
 
 rem If the ignore list, custom list, or compression level is not applied to the hosts file, upate
 if !HASH!==1 if not "!NEWIGNORE!!NEWCUSTOM!!NEWCOMP!"=="!OLDIGNORE!!OLDCUSTOM!!OLDCOMP!" (
