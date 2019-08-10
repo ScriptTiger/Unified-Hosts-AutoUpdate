@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.24
+set V=1.25
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -45,7 +45,7 @@ if "%1"=="/U" (
 	echo The updated script has been loaded
 	echo %NEW% %COMMIT%>"%VERSION%"
 	if exist "%README%" del /q "%README%"
-	%BITS_FROM% %GH%/%COMMIT%/README.md %BITS_TO% "%README%"
+	call :Download %GH%/%COMMIT%/README.md "%README%" readme
 ) else (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
@@ -120,7 +120,7 @@ if not "%V%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul
-	%BITS_FROM% %GH%/%COMMIT%/Hosts_Update.cmd %BITS_TO% "%UPDATE%"
+	call :Download %GH%/%COMMIT%/Hosts_Update.cmd "%UPDATE%" update
 	timeout /t 3 /nobreak > nul
 	"%UPDATE%" /U
 ) else echo Your script is up to date
@@ -267,7 +267,7 @@ if %NET%==0 goto Skip_Hosts_Checking
 
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
-	%BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
+	call :Download %URL% "%CTEMP%" base
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
 	) do (
@@ -386,7 +386,7 @@ rem File writing function
 :File
 
 rem If updating/installing, download the target hosts file to cache
-if not !REMOVE!==1 %BITS_FROM% %URL% %BITS_TO% "%CTEMP%"
+if not !REMOVE!==1 call :Download %URL% "%CTEMP%" hosts
 
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
@@ -633,6 +633,17 @@ if not exist "%SCACHE%" (
 	goto Notepad
 )
 goto Run_Wait
+
+rem Function to handle downloads
+:Download
+set RETRY=0
+:Retry
+%BITS_FROM% %1 %BITS_TO% %2 > nul && (echo Downloaded %3 successfully & exit /b)
+set /a RETRY=!RETRY!+1
+echo Download Retry !RETRY!: %3...
+timeout /t 10 /nobreak > nul
+goto Retry
+exit /b
 
 rem Error handling functions
 
