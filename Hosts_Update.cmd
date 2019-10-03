@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.25
+set V=1.26
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -429,10 +429,12 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 					echo #
 					for /f "tokens=1,2*" %%0 in (
 						'findstr /l /v /g:"%IGNORE%" "%CTEMP%"'
-					) do @(
+					) do (
 						set WORD1=%%0
 						set WORD2=%%1
-						set LINE=%%0 %%1 %%2
+						if "%%2"=="" (
+							set LINE=%%0 %%1
+						) else set LINE=%%0 %%1 %%2
 						if "!LINE!"=="# Custom host records are listed here." set COUNT1=1
 						if !COUNT1! geq 1 (
 							if !NEWCOMP! geq 2 (
