@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.26
+set V=1.27
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -267,7 +267,8 @@ if %NET%==0 goto Skip_Hosts_Checking
 
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
-	call :Download %URL% "%CTEMP%" base
+	%BITS_FROM% %URL% %BITS_TO% "%CTEMP%" > nul || call :Connectivity
+	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
 	) do (
@@ -368,6 +369,10 @@ if not !QUIET!==1 (
 	)
 	if !TASK!==0 (
 		echo You don't have a scheduled task to automatically update daily
+		if %NET%==0 (
+			echo Please remember, you are currently in interactive offline mode
+			echo Without a scheduled task, this script will not perform any changes
+		)
 		call :Schedule
 	)
 	if !TASK!==2 (
@@ -652,7 +657,7 @@ rem Error handling functions
 :Connectivity
 echo.
 echo This script cannot connect to the Internet^^!
-if !QUIET!==1 exit
+if !QUIET!==1 goto Exit
 echo You are either not connected or BITS does not have permission
 echo You are now in interactive offline mode
 set NET=0
