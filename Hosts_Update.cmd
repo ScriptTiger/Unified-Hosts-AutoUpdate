@@ -531,7 +531,7 @@ if !TASK!==1 call :Unschedule
 	echo ^<?xml version="1.0" encoding="UTF-16"?^>
 	echo ^<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"^>
 	echo ^<RegistrationInfo^>
-	echo ^<URI^>\Unified Hosts AutoUpdate^</URI^>
+	echo ^<URI^>\%TN%^</URI^>
 	echo ^</RegistrationInfo^>
 	echo ^<Triggers^>
 	echo ^<CalendarTrigger^>
