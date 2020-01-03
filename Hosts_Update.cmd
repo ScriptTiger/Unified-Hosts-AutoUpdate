@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.27
+set V=1.28
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -26,7 +26,8 @@ set IGNORE=%~dp0ignore.txt
 set CUSTOM=%~dp0custom.txt
 set README=%~dp0README.md
 set UPDATE=%~dp0Update.cmd
-set CMD=%~dp0Hosts_Update.cmd
+set CMD=Hosts_Update.cmd
+set CMDDIR=%~dp0
 set LOCK=%~dp0lock
 set SELF=%~f0
 set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate
@@ -120,7 +121,7 @@ if not "%V%"=="%NEW%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul
-	call :Download %GH%/%COMMIT%/Hosts_Update.cmd "%UPDATE%" update
+	call :Download %GH%/%COMMIT%/%CMD% "%UPDATE%" update
 	timeout /t 3 /nobreak > nul
 	"%UPDATE%" /U
 ) else echo Your script is up to date
@@ -570,8 +571,9 @@ if !TASK!==1 call :Unschedule
 	echo ^</Settings^>
 	echo ^<Actions Context="Author"^>
 	echo ^<Exec^>
-	echo ^<Command^>"%CMD%"^</Command^>
+	echo ^<Command^>%CMD%^</Command^>
 	echo ^<Arguments^>%URL% %NEWCOMP%^</Arguments^>
+	echo ^<WorkingDirectory^>%CMDDIR%^</WorkingDirectory^>
 	echo ^</Exec^>
 	echo ^</Actions^>
 	echo ^</Task^>
@@ -620,7 +622,7 @@ if exist "%CACHE%" (
 	rmdir /s /q "%CACHE%"
 )
 rem If not locked and a downloaded update is available, replace the old script with the new one and exit
-if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMD%"&ren "%UPDATE%" Hosts_Update.cmd&exit
+if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit
 exit
 
 rem Function for running a scheduled task from script before exiting
