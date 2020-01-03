@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.28
+set V=1.29
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -39,6 +39,7 @@ set TN=Unified Hosts AutoUpdate
 set HASHER=%SYSTEMROOT%\System32\certutil.exe
 set REMOVE=0
 set NET=1
+set EXIT=0
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
@@ -113,6 +114,7 @@ if "%NEW:~,1%"=="X" (
 	echo **We are currently working to fix a problem**
 	echo **Please try again later**
 	if not !QUIET!==1 pause
+	set EXIT=4
 	goto Exit
 )
 
@@ -622,8 +624,8 @@ if exist "%CACHE%" (
 	rmdir /s /q "%CACHE%"
 )
 rem If not locked and a downloaded update is available, replace the old script with the new one and exit
-if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit
-exit
+if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit %EXIT%
+exit %EXIT%
 
 rem Function for running a scheduled task from script before exiting
 :Run
@@ -659,7 +661,10 @@ rem Error handling functions
 :Connectivity
 echo.
 echo This script cannot connect to the Internet^^!
-if !QUIET!==1 goto Exit
+if !QUIET!==1 (
+	set EXIT=5
+	goto Exit
+)
 echo You are either not connected or BITS does not have permission
 echo You are now in interactive offline mode
 set NET=0
@@ -669,15 +674,22 @@ exit /b
 echo BITS cannot be found
 echo This script requires BITS to be installed on you system in order to function
 if not !QUIET!==1 pause
+set EXIT=6
 goto Exit
 
 :Admin
 echo You must run this with administrator privileges!
 if not !QUIET!==1 pause
+set EXIT=1
 goto Exit
 
 :Mark
-if !MARKED!==-1 echo "#### END UNIFIED HOSTS ####" not properly marked in hosts file^^!
+if !MARKED!==-1 (
+	echo "#### END UNIFIED HOSTS ####" not properly marked in hosts file^^!
+	set EXIT=2
+) else (
+	set EXIT=3
+)
 echo.
 echo Hosts is not properly marked
 echo Please ensure the following lines mark where to insert the blacklist:
