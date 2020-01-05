@@ -46,7 +46,7 @@ set NET=1
 set EXIT=0
 
 rem Shift out DFC switch
-if %DFC%==1 shift
+if /i "%~1"=="/dfc" shift
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
