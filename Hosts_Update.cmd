@@ -7,6 +7,10 @@ rem Or visit the following URL for the latest information on this ScriptTiger sc
 rem https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 rem =====
 
+rem Check and set DFC switch
+set DFC=0
+if /i "%~1"=="/dfc" set DFC=1
+
 rem Check for admin rights, and exit if none present
 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" > nul || goto Admin
 
@@ -14,7 +18,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.30
+set V=1.31
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -40,6 +44,9 @@ set HASHER=%SYSTEMROOT%\System32\certutil.exe
 set REMOVE=0
 set NET=1
 set EXIT=0
+
+rem Shift out DFC switch
+if %DFC%==1 shift
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
@@ -113,7 +120,7 @@ if "%NEW:~,1%"=="X" (
 	echo.
 	echo **We are currently working to fix a problem**
 	echo **Please try again later**
-	if not !QUIET!==1 pause
+	if not !QUIET!==1 if !DFC!==0 pause
 	set EXIT=4
 	goto Exit
 )
@@ -382,7 +389,7 @@ if not !QUIET!==1 (
 		echo Your version of Windows isn't compatible with this script's task scheduler
 		echo In your task scheduler, schedule a task to execute this script
 		echo Following the script's path, send the URL of the blacklist you want:
-		echo "%~0" %URL%
+		echo "%SELF%" %URL%
 		choice.exe /m "Would you like to open the Task Scheduler now?"
 		if !errorlevel!==1 start taskschd.msc
 	)
@@ -626,6 +633,10 @@ if exist "%CACHE%" (
 	echo Cleaning temporary files...
 	rmdir /s /q "%CACHE%"
 )
+
+rem Set the DFC switch if applicable
+if %DFC%==1 set EXIT=/b %EXIT%
+
 rem If not locked and a downloaded update is available, replace the old script with the new one and exit
 if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit %EXIT%
 exit %EXIT%
@@ -676,13 +687,13 @@ exit /b
 :BITS
 echo BITS cannot be found
 echo This script requires BITS to be installed on you system in order to function
-if not !QUIET!==1 pause
+if not !QUIET!==1 if !DFC!==0 pause
 set EXIT=6
 goto Exit
 
 :Admin
 echo You must run this with administrator privileges!
-if not !QUIET!==1 pause
+if not !QUIET!==1 if %DFC%==0 pause
 set EXIT=1
 goto Exit
 
