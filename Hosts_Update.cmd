@@ -14,7 +14,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.29
+set V=1.30
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -608,12 +608,15 @@ if !errorlevel!==0 (
 	for /f "tokens=3" %%a in (
 		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
 	) do set PROGID=%%a
-	for /f "tokens=2 delims==" %%a in (
-		'ftype !PROGID!'
-	) do set CMDVIEWTEXT=%%a
-	for /f "tokens=* usebackq" %%a in (
-		`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`
-	) do start "" %%~a
+	ftype !PROGID! > nul
+	if !errorlevel!==0 (
+		for /f "tokens=2 delims==" %%a in (
+			'ftype !PROGID!'
+		) do set CMDVIEWTEXT=%%a
+		for /f "tokens=* usebackq" %%a in (
+			`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`
+		) do start "" %%~a
+	) else start notepad %HOSTS%
 ) else start notepad %HOSTS%
 goto Exit
 
