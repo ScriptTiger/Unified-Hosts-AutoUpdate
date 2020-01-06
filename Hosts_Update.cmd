@@ -610,6 +610,8 @@ if !NET!==0 if !TASK!==1 goto Run
 
 choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==2 goto Exit
+set PROGID=
+set CMDVIEWTEXT=
 reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID > nul
 if !errorlevel!==0 (
 	for /f "tokens=3" %%a in (
@@ -620,6 +622,14 @@ if !errorlevel!==0 (
 		for /f "tokens=2 delims==" %%a in (
 			'ftype !PROGID!'
 		) do set CMDVIEWTEXT=%%a
+	) else (
+		if "!PROGID:~,13!"=="Applications\" (
+			for /f "tokens=2*" %%a in (
+				'reg query HKCR\!PROGID!\shell\open\command'
+			) do set CMDVIEWTEXT=%%b
+		)
+	)
+	if not "!CMDVIEWTEXT!"=="" (
 		for /f "tokens=* usebackq" %%a in (
 			`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`
 		) do start "" %%~a
