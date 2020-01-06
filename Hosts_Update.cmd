@@ -105,6 +105,9 @@ if "%OLD:~,1%"=="X" (
 	echo !OLD! %COMMIT%>"%VERSION%"
 )
 
+rem Combine local version info to single string
+set OLD=%V%%OLD%%COMMIT%
+
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
 %BITS_FROM% %GH%/master/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
@@ -125,8 +128,8 @@ if "%NEW:~,1%"=="X" (
 	goto Exit
 )
 
-rem If the versions don't match, automatically update and continue with updated script
-if not "%V%"=="%NEW%" (
+rem If the version info doesn't match, automatically update and continue with updated script
+if not "%OLD%"=="%NEW%%NEW%%COMMIT%" (
 	echo A new script update is available^^!
 	echo Updating script...
 	timeout /t 3 /nobreak > nul
