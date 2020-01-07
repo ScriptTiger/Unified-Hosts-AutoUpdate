@@ -7,13 +7,6 @@ rem Or visit the following URL for the latest information on this ScriptTiger sc
 rem https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
 rem =====
 
-rem Check and set DFC switch
-set DFC=0
-if /i "%~1"=="/dfc" set DFC=1
-
-rem Check for admin rights, and exit if none present
-"%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" > nul || goto Admin
-
 rem Enable delayed expansion to be used during for loops and other parenthetical groups
 setlocal ENABLEDELAYEDEXPANSION
 
@@ -44,9 +37,13 @@ set HASHER=%SYSTEMROOT%\System32\certutil.exe
 set REMOVE=0
 set NET=1
 set EXIT=0
+set DFC=0
 
-rem Shift out DFC switch
-if /i "%~1"=="/dfc" shift
+rem Check and set DFC switch, and shift over if exists
+if /i "%1"=="/dfc" (
+	set DFC=1
+	shift
+)
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
@@ -66,6 +63,9 @@ if "%1"=="/U" (
 		if not "%2"=="" set NEWCOMP=%2
 	) else set QUIET=0
 )
+
+rem Check for admin rights, and exit if none present
+"%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" > nul || goto Admin
 
 rem Check access to BITS and set BITS string or report error
 set BITS=0
@@ -124,6 +124,7 @@ if "%NEW:~,1%"=="X" (
 	echo **We are currently working to fix a problem**
 	echo **Please try again later**
 	if not !QUIET!==1 if !DFC!==0 pause
+	set ERROR=Currently disabled due to maintenance, please try again later.
 	set EXIT=4
 	goto Exit
 )
@@ -641,6 +642,9 @@ if !errorlevel!==0 (
 goto Exit
 
 :Exit
+rem Attempt to open PowerShell error dialog if applicable
+if %QUIET%==1 if not %EXIT%==0 start "" /min powershell.exe "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('ERROR: %ERROR%', 'Unified Hosts AutoUpdate')"
+
 rem Clean up temporary files if they exist
 if exist "%CACHE%" (
 	echo Cleaning temporary files...
@@ -689,6 +693,7 @@ rem Error handling functions
 echo.
 echo This script cannot connect to the Internet^^!
 if !QUIET!==1 (
+	set ERROR=Cannot connect to the Internet!
 	set EXIT=5
 	goto Exit
 )
@@ -701,24 +706,28 @@ exit /b
 echo BITS cannot be found
 echo This script requires BITS to be installed on you system in order to function
 if not !QUIET!==1 if !DFC!==0 pause
+set ERROR=BITS not installed!
 set EXIT=6
 goto Exit
 
 :Admin
 echo You must run this with administrator privileges!
-if not !QUIET!==1 if %DFC%==0 pause
+if not !QUIET!==1 if !DFC!==0 pause
+set ERROR=Must be run with administrative permissions!
 set EXIT=1
 goto Exit
 
 :Mark
 if !MARKED!==-1 (
 	echo "#### END UNIFIED HOSTS ####" not properly marked in hosts file^^!
+	set ERROR="""#### END UNIFIED HOSTS ####""" not properly marked in hosts file!
 	set EXIT=2
 ) else (
+	set ERROR=Hosts file is not properly marked!
 	set EXIT=3
 )
 echo.
-echo Hosts is not properly marked
+echo Hosts file is not properly marked
 echo Please ensure the following lines mark where to insert the blacklist:
 echo.
 echo #### BEGIN UNIFIED HOSTS ####
