@@ -643,7 +643,8 @@ goto Exit
 
 :Exit
 rem Attempt to open PowerShell error dialog if applicable
-if %QUIET%==1 if not %EXIT%==0 start "" /min powershell.exe "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('ERROR: %ERROR%', 'Unified Hosts AutoUpdate')"
+powershell "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')" > nul
+if %errorlevel%==0 if %QUIET%==1 if not %EXIT%==0 start "" /min powershell.exe "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('ERROR: %ERROR%', 'Unified Hosts AutoUpdate')"
 
 rem Clean up temporary files if they exist
 if exist "%CACHE%" (
@@ -693,7 +694,7 @@ rem Error handling functions
 echo.
 echo This script cannot connect to the Internet^^!
 if !QUIET!==1 (
-	set ERROR=Cannot connect to the Internet!
+	set ERROR=Cannot connect to the Internet^^^^^^!
 	set EXIT=5
 	goto Exit
 )
@@ -706,24 +707,24 @@ exit /b
 echo BITS cannot be found
 echo This script requires BITS to be installed on you system in order to function
 if not !QUIET!==1 if !DFC!==0 pause
-set ERROR=BITS not installed!
+set ERROR=BITS not installed^^^^^^!
 set EXIT=6
 goto Exit
 
 :Admin
-echo You must run this with administrator privileges!
+echo You must run this with administrator privileges^^!
 if not !QUIET!==1 if !DFC!==0 pause
-set ERROR=Must be run with administrative permissions!
+set ERROR=Must be run with administrative permissions^^^^^^!
 set EXIT=1
 goto Exit
 
 :Mark
 if !MARKED!==-1 (
 	echo "#### END UNIFIED HOSTS ####" not properly marked in hosts file^^!
-	set ERROR="""#### END UNIFIED HOSTS ####""" not properly marked in hosts file!
+	set ERROR="""#### END UNIFIED HOSTS ####""" not properly marked in hosts file^^^^^^!
 	set EXIT=2
 ) else (
-	set ERROR=Hosts file is not properly marked!
+	set ERROR=Hosts file is not properly marked^^^^^^!
 	set EXIT=3
 )
 echo.
