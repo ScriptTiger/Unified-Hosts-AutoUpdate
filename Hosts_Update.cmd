@@ -357,15 +357,11 @@ if not !QUIET!==1 (
 	echo If you choose a level of compression, please expect the update to take longer.
 	echo Your current compression level is %OLDCOMP%.
 	choice.exe /m "Would you like to just stick with that?"
-	if !errorlevel!==1 (
-		set NEWCOMP=%OLDCOMP%
-		goto Skip_Choice2
-	)
-	choice.exe /c 123456789 /n /m "New compression level?"
-	set NEWCOMP=!errorlevel!
+	if !errorlevel!==2 (
+		choice.exe /c 123456789 /n /m "New compression level?"
+		set NEWCOMP=!errorlevel!
+	) else set NEWCOMP=%OLDCOMP%
 )
-
-:Skip_Choice2
 
 if %NET%==0 goto Skip_Hosts_Update
 
