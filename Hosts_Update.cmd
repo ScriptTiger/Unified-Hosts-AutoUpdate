@@ -259,7 +259,7 @@ echo Checking for Unified Hosts updates...
 rem Initialize OLD to NUL in case markings are present but not Unified Hosts
 set OLD=NUL
 
-rem rem Grab date and URL from the Unified Hosts inside of the local hosts file
+rem Grab date and URL from the Unified Hosts inside of the local hosts file
 for /f "tokens=*" %%0 in (
 	'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%HOSTS%"'
 ) do (
@@ -342,7 +342,7 @@ if not !QUIET!==1 (
 			set CAT=!CAT:__=-!
 			set CAT=!CAT:_=!
 			set URL=%BASE%/alternates/!CAT!/hosts
-		) else (set URL=%BASE%/hosts)
+		) else set URL=%BASE%/hosts
 	) else set URL=%BASE%/hosts
 )
 
