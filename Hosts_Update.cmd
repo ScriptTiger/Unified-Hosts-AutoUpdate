@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.31
+set V=1.32
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -639,7 +639,13 @@ goto Exit
 
 :Exit
 rem Attempt to open error dialog if applicable
-if %QUIET%==1 if not %EXIT%==0 msg * ERROR: %ERROR%^^!
+if %QUIET%==1 if not %EXIT%==0 (
+	(
+		echo ***** Unified Hosts AutoUpdate *****
+		echo.
+		echo ERROR: %ERROR%^^!
+	) | msg *
+)
 
 rem Clean up temporary files if they exist
 if exist "%CACHE%" (
