@@ -39,6 +39,18 @@ If you are deploying the update script across an organization via a shared netwo
 1.10X  
 This will disable the script from checking for script updates and attempting to update itself. This does not affect updates to the hosts file or whatever scheduled tasks you may have in place, this strictly disables the Hosts_Update.cmd from updating itself within the shared network location which remote system accounts running the scheduled tasks may not have write access to.
 
+By default the script forces the command processor instance to close upon completion just to ensure you don't have an unattended command prompt with administrative permissions lingering where it's not needded. However, for debugging or other purposes you can send `/DFC` as the first argument to prevent the command prompt from closing after script completion. Forfurther debugging, please reference the following error code table.
+
+Decimal Error Code | Hexadecimal Error Code | Explanation
+-------------------|------------------------|-----------------------------------------------------------------------------------
+0                  | 0x0                    | The operation completed successfully. (No errors)
+1                  | 0x1                    | Must be run with administrative permissions
+2                  | 0x2                    | "#### END UNIFIED HOSTS ####" not properly marked in hosts file
+3                  | 0x3                    | Hosts file is not properly marked
+4                  | 0x4                    | Currently disabled due to maintenance, please try again later
+5                  | 0x5                    | Cannot connect to the Internet
+6                  | 0x6                    | BITS not installed
+
 **This script is in active development, so please share your feedback on what you like and don't like so we know what direction to take and don't inadvertently make things worse**
 
 For more ScriptTiger scripts and goodies, check out ScriptTiger's GitHub Pages website:  
