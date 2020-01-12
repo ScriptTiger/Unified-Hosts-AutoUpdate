@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.32
+set V=1.33
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -74,10 +74,12 @@ powershell get-bitstransfer > nul && set /a BITS=%BITS%+2
 if %BITS% geq 2 (
 	set BITS_FROM=powershell Start-BitsTransfer -source
 	set BITS_TO= -destination
+	set Q='
 )
 if %BITS%==1 (
 	set BITS_FROM=bitsadmin /transfer ""
 	set BITS_TO=
+	set Q="
 )
 if %BITS%==0 goto BITS
 
@@ -110,7 +112,7 @@ set OLD=%V%%OLD%%COMMIT%
 
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
-%BITS_FROM% %GH%/master/VERSION %BITS_TO% "%CTEMP%" > nul || call :Connectivity
+%BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || call :Connectivity
 if %NET%==0 goto Skip_Script_Update
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
@@ -281,7 +283,7 @@ if %NET%==0 goto Skip_Hosts_Checking
 
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
-	%BITS_FROM% %URL% %BITS_TO% "%CTEMP%" > nul || call :Connectivity
+	%BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
@@ -682,7 +684,7 @@ rem Function to handle downloads
 :Download
 set RETRY=0
 :Retry
-%BITS_FROM% %1 %BITS_TO% %2 > nul && (echo Downloaded %3 successfully & exit /b)
+%BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% > nul && (echo Downloaded %3 successfully & exit /b)
 set /a RETRY=!RETRY!+1
 echo Download Retry !RETRY!: %3...
 timeout /t 10 /nobreak > nul
