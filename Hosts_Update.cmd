@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.33
+set V=1.34
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
