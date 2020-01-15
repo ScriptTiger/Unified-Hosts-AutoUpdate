@@ -646,7 +646,7 @@ if %QUIET%==1 if not %EXIT%==0 (
 		echo ***** Unified Hosts AutoUpdate *****
 		echo.
 		echo ERROR: %ERROR%^^!
-	) | msg *
+	) | msg * /time:86400
 )
 
 rem Clean up temporary files if they exist
