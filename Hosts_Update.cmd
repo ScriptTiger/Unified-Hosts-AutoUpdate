@@ -121,12 +121,10 @@ rem Combine local version info to single string
 set OLD=%V%%OLD%%COMMIT%
 
 rem Check general connectivity
-set LABEL=Skip_Script_Update
 ping %GHD% > nul || goto Connectivity
 
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
-set LABEL=BITS_Connectivity_Check
 %BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || goto BITS_Connectivity
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
