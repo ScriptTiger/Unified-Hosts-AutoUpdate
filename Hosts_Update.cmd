@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.34
+set V=1.35
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -27,7 +27,8 @@ set CMD=Hosts_Update.cmd
 set CMDDIR=%~dp0
 set LOCK=%~dp0lock
 set SELF=%~f0
-set GH=https://raw.githubusercontent.com/ScriptTiger/Unified-Hosts-AutoUpdate
+set GHD=raw.githubusercontent.com
+set GH=https://%GHD%/ScriptTiger/Unified-Hosts-AutoUpdate
 set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
 set CHOSTS=%CACHE%\hosts
 set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
@@ -39,19 +40,28 @@ set NET=1
 set EXIT=0
 set DFC=0
 
-rem Check and set DFC switch, and shift over if exists
-if /i "%1"=="/dfc" (
-	set DFC=1
+rem Check switches and shift over
+:Switches
+set SWITCH=.%~1
+if "%SWITCH:~,2%"=="./" (
+	set SWITCH=%~1
+	if /i "!SWITCH!"=="/dfc" set DFC=1
+	if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
 	shift
+	goto Switches
 )
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
 	cls
-	echo The updated script has been loaded
+	call :Echo "The updated script has been loaded"
 	echo %NEW% %COMMIT%>"%VERSION%"
 	if exist "%README%" del /q "%README%"
 	call :Download %GH%/%COMMIT%/README.md "%README%" readme
+	if !DOWNLOAD!==0 (
+		set DOWNLOAD=%GH%/%COMMIT%/README.md
+		goto Exit
+	)
 ) else (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
@@ -64,7 +74,7 @@ if "%1"=="/U" (
 	) else set QUIET=0
 )
 
-rem Check for admin rights, and exit if none present
+rem Check for admin rights, exit if none present
 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" > nul || goto Admin
 
 rem Check access to BITS and set BITS string or report error
@@ -87,7 +97,7 @@ rem Create temporary cache if does not exist
 if not exist "%CACHE%" md "%CACHE%"
 
 rem Begin version checks
-echo Checking for script updates...
+call :Echo "Checking for script updates..."
 
 rem Grab local version and commit
 for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
@@ -97,7 +107,7 @@ for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
 
 rem If script updates are disabled, skip to the next step
 if /i "%OLD:~-1%"=="X" (
-	echo Script updates currently disabled
+	call :Echo "Script updates currently disabled"
 	goto Skip_Script_Update
 )
 
@@ -110,10 +120,14 @@ if "%OLD:~,1%"=="X" (
 rem Combine local version info to single string
 set OLD=%V%%OLD%%COMMIT%
 
+rem Check general connectivity
+set LABEL=Skip_Script_Update
+ping %GHD% > nul || goto Connectivity
+
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
-%BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || call :Connectivity
-if %NET%==0 goto Skip_Script_Update
+set LABEL=BITS_Connectivity_Check
+%BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || goto BITS_Connectivity
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
 	set NEW=%%0
@@ -122,9 +136,8 @@ for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
 
 rem Check for emergency stop status
 if "%NEW:~,1%"=="X" (
-	echo.
-	echo **We are currently working to fix a problem**
-	echo **Please try again later**
+	call :Echo "**We are currently working to fix a problem**" ^
+	"**Please try again later**"
 	if not !QUIET!==1 if !DFC!==0 pause
 	set ERROR=Currently disabled due to maintenance, please try again later
 	set EXIT=4
@@ -133,13 +146,17 @@ if "%NEW:~,1%"=="X" (
 
 rem If the version info doesn't match, automatically update and continue with updated script
 if not "%OLD%"=="%NEW%%NEW%%COMMIT%" (
-	echo A new script update is available^^!
-	echo Updating script...
+	call :Echo "A new script update is available^^^!" ^
+	"Updating script..."
 	timeout /t 3 /nobreak > nul
 	call :Download %GH%/%COMMIT%/%CMD% "%UPDATE%" update
+	if !DOWNLOAD!==0 (
+		set DOWNLOAD=%GH%/%COMMIT%/%CMD%
+		goto Exit
+	)
 	timeout /t 3 /nobreak > nul
 	"%UPDATE%" /U
-) else echo Your script is up to date
+) else call :Echo "Your script is up to date"
 
 :Skip_Script_Update
 
@@ -151,7 +168,7 @@ if not !QUIET!==1 (
 		set TASK=0
 		for /f "tokens=*" %%0 in ('schtasks ^| findstr "Unified.Hosts.AutoUpdate"') do set TASK=1
 		if !TASK!==1 (
-			echo You currently have a scheduled task already in place
+			call :Echo "You currently have a scheduled task already in place"
 			choice.exe /m "Would you like to run the current task now?"
 			if !errorlevel!==1 goto Run
 			choice.exe /m "Would you like to keep the current task?"
@@ -227,7 +244,7 @@ rem Assess tags as correct, incorrect, or absent
 rem If there are no tags, offer to install them
 rem Check to see if the file is null-terminating before appending extra white space
 if !MARKED!==0 (
-	echo The Unified Hosts has not yet been marked in your local hosts file
+	call :Echo "The Unified Hosts has not yet been marked in your local hosts file"
 	if not !QUIET!==1 (
 		choice.exe /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
 		if !ERRORLEVEL!==2 goto Mark
@@ -240,7 +257,7 @@ if !MARKED!==0 (
 )
 
 if !MARKED!==2 (
-	echo The Unified Hosts is already installed in your local hosts file
+	call :Echo "The Unified Hosts is already installed in your local hosts file"
 	if not !QUIET!==1 (
 		choice.exe /M "Would you like to continue to update it?"
 		if !errorlevel!==2 (
@@ -256,7 +273,7 @@ if !MARKED!==2 (
 	)
 ) else goto Mark
 
-echo Checking for Unified Hosts updates...
+call :Echo "Checking for Unified Hosts updates..."
 
 rem Initialize OLD to NUL in case markings are present but not Unified Hosts
 set OLD=NUL
@@ -283,7 +300,7 @@ if %NET%==0 goto Skip_Hosts_Checking
 
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
-	%BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :Connectivity
+	%BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :BITS_Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
@@ -296,17 +313,17 @@ if not "%URL%"=="" (
 
 rem If the ignore list, custom list, or compression level is not applied to the hosts file, upate
 if !HASH!==1 if not "!NEWIGNORE!!NEWCUSTOM!!NEWCOMP!"=="!OLDIGNORE!!OLDCUSTOM!!OLDCOMP!" (
-	echo Your current ignore list, custom list, or compression level needs to be applied.
+	call :Echo "Your current ignore list, custom list, or compression level needs to be applied."
 	goto Update
 )
 
 rem If the remote and local dates and URLs are not the same, update
 if "%OLD%"=="%NEW%" (
 	if !QUIET!==1 goto Exit
-	echo You already have the latest version.
+	call :Echo "You already have the latest version."
 	choice.exe /M "Would you like to update anyway?"
 	if !errorlevel!==2 goto Exit
-) else echo A new Unified Hosts update is available^^!
+) else call :Echo "A new Unified Hosts update is available^^^!"
 
 :Skip_Hosts_Checking
 
@@ -316,13 +333,13 @@ rem Function to update current local hosts with current Unified Hosts
 if not !QUIET!==1 (
 
 	if "%URL:~-6%"=="/hosts" (
-		echo Your current preset is to use the following Unified Hosts:
-		echo %URL%
+		call :Echo "Your current preset is to use the following Unified Hosts:" ^
+		"echo %URL%"
 		choice.exe /m "Would you like to just stick with that?"
 		if !errorlevel!==1 goto Skip_Choice
 	)
 
-	echo The Unified Hosts will automatically block malware and adware.
+	call :Echo "The Unified Hosts will automatically block malware and adware."
 	choice.exe /m "Would you also like to block other categories?"
 	if !errorlevel!==1 (
 
@@ -354,10 +371,10 @@ if not "%URL:~-6%"=="/hosts" set URL=%BASE%/hosts
 :Skip_Choice
 
 if not !QUIET!==1 (
-	echo Your hosts file can be from 1 to 9 domains per line.
-	echo 1 is standard, more than 1 is a level of compression.
-	echo If you choose a level of compression, please expect the update to take longer.
-	echo Your current compression level is %OLDCOMP%.
+	call :Echo "Your hosts file can be from 1 to 9 domains per line." ^
+	"1 is standard, more than 1 is a level of compression." ^
+	"If you choose a level of compression, please expect the update to take longer." ^
+	"Your current compression level is %OLDCOMP%."
 	choice.exe /m "Would you like to just stick with that?"
 	if !errorlevel!==2 (
 		choice.exe /c 123456789 /n /m "New compression level?"
@@ -367,7 +384,7 @@ if not !QUIET!==1 (
 
 if %NET%==0 goto Skip_Hosts_Update
 
-echo Updating the hosts file...
+call :Echo "Updating the hosts file..."
 call :File
 call :Flush
 
@@ -375,23 +392,23 @@ call :Flush
 
 if not !QUIET!==1 (
 	if !TASK!==1 (
-		echo You currently have a scheduled task already in place
-		echo Creating a new one will overwrite the previous task with your new settings
+		call :Echo "You currently have a scheduled task already in place" ^
+		"Creating a new one will overwrite the previous task with your new settings"
 		call :Schedule
 	)
 	if !TASK!==0 (
-		echo You don't have a scheduled task to automatically update daily
+		call :Echo "You don't have a scheduled task to automatically update daily"
 		if %NET%==0 (
-			echo Please remember, you are currently in interactive offline mode
-			echo Without a scheduled task, this script will not perform any changes
+			call :Echo "Please remember, you are currently in interactive offline mode" ^
+			"Without a scheduled task, this script will not perform any changes"
 		)
 		call :Schedule
 	)
 	if !TASK!==2 (
-		echo Your version of Windows isn't compatible with this script's task scheduler
-		echo In your task scheduler, schedule a task to execute this script
-		echo Following the script's path, send the URL of the blacklist you want:
-		echo "%SELF%" %URL%
+		call :Echo "Your version of Windows isn't compatible with this script's task scheduler" ^
+		"In your task scheduler, schedule a task to execute this script" ^
+		"Following the script's path, send the URL of the blacklist you want:" ^
+		""%SELF%" %URL%"
 		choice.exe /m "Would you like to open the Task Scheduler now?"
 		if !errorlevel!==1 start taskschd.msc
 	)
@@ -403,7 +420,13 @@ rem File writing function
 :File
 
 rem If updating/installing, download the target hosts file to cache
-if not !REMOVE!==1 call :Download %URL% "%CTEMP%" hosts
+if not !REMOVE!==1 (
+	call :Download %URL% "%CTEMP%" hosts
+	if !DOWNLOAD!==0 (
+		set DOWNLOAD=%URL%
+		goto Exit
+	)
+)
 
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
@@ -488,15 +511,15 @@ copy "%CHOSTS%" "%HOSTS%" /y > nul
 rem Make sure the hosts file was placed correctly and take action accordingly
 if !errorlevel!==0 (
 	if !REMOVE!==1 (
-		echo The Unified Hosts has been removed
+		call :Echo "The Unified Hosts has been removed"
 	) else (
-		echo Your Unified Hosts has been updated
+		call :Echo "Your Unified Hosts has been updated"
 	)
 ) else (
-	echo WARNING: There was a problem writing to your hosts file
-	echo The two most common causes are:
-	echo 1.] It is being used by another application
-	echo 2.] It is intentionally locked by an antivirus or similar application
+	call :Echo "WARNING: There was a problem writing to your hosts file" ^
+	"The two most common causes are:" ^
+	"1.] It is being used by another application" ^
+	"2.] It is intentionally locked by an antivirus or similar application"
 	if not !QUIET!==1 (
 		choice.exe /m "Would you like to try writing to your hosts file again?"
 		if !errorlevel!==1 goto Write
@@ -600,7 +623,7 @@ exit /b
 
 rem Flush the DNS cache
 :Flush
-echo Flushing local DNS cache...
+call :Echo "Flushing local DNS cache..."
 ipconfig /flushdns > nul
 exit /b
 
@@ -639,6 +662,7 @@ if !errorlevel!==0 (
 ) else start notepad %HOSTS%
 goto Exit
 
+rem Function to handle script exits
 :Exit
 rem Attempt to open error dialog if applicable
 if %QUIET%==1 if not %EXIT%==0 (
@@ -651,7 +675,7 @@ if %QUIET%==1 if not %EXIT%==0 (
 
 rem Clean up temporary files if they exist
 if exist "%CACHE%" (
-	echo Cleaning temporary files...
+	call :Echo "Cleaning temporary files..."
 	rmdir /s /q "%CACHE%"
 )
 
@@ -667,13 +691,13 @@ rem Function for running a scheduled task from script before exiting
 rem Lock the running script from being replaced by an update during the triggered task
 rem Unlock later and replace running script with update if exists before exit
 echo lock > "%LOCK%"
-echo Activating update task...
+call :Echo "Activating update task..."
 schtasks /run /tn "%TN%"
-echo Update task running...
+call :Echo "Update task running..."
 :Run_Wait
 timeout /t 5 /nobreak > nul
 if not exist "%SCACHE%" (
-	echo Update task has completed
+	call :Echo "Update task has completed"
 	set TASK=3
 	del /q "%LOCK%"
 	goto Notepad
@@ -683,39 +707,67 @@ goto Run_Wait
 rem Function to handle downloads
 :Download
 set RETRY=0
+set DOWNLOAD=0
 :Retry
-%BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% > nul && (echo Downloaded %3 successfully & exit /b)
+%BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% > nul && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
+if !RETRY!==3 exit /b
 set /a RETRY=!RETRY!+1
-echo Download Retry !RETRY!: %3...
-timeout /t 10 /nobreak > nul
+set /a TIMER=!RETRY!*30
+call :Echo "Waiting !TIMER! seconds before retry..."
+timeout /t !TIMER! /nobreak > nul
+call :Echo "Download Retry !RETRY!: %3..."
 goto Retry
+exit /b
+
+rem Function to handle script output
+:Echo
+echo %~1
+if not "%LOG%"=="" echo %DATE% @ %TIME%: %~1>>"%LOG%"
+shift
+if not "%~1"=="" goto Echo
 exit /b
 
 rem Error handling functions
 
 :Connectivity
-echo.
-echo This script cannot connect to the Internet^^!
+call :Echo "Your system cannot connect to %GHD%^^^!"
 if !QUIET!==1 (
-	set ERROR=Cannot connect to the Internet
+	set ERROR=Your system cannot connect to %GHD%
 	set EXIT=5
 	goto Exit
 )
-echo You are either not connected or BITS does not have permission
-echo You are now in interactive offline mode
+call :Echo "You are now in interactive offline mode"
 set NET=0
-exit /b
+goto Skip_Script_Update
 
 :BITS
-echo BITS cannot be found
-echo This script requires BITS to be installed on you system in order to function
+call :Echo "BITS cannot be found" ^
+"This script requires BITS to be installed on you system in order to function"
 if not !QUIET!==1 if !DFC!==0 pause
 set ERROR=BITS not installed
 set EXIT=6
 goto Exit
 
+:BITS_Connectivity
+call :Echo "BITS cannot connect to %GHD%^^^!"
+if !QUIET!==1 (
+	set ERROR=BITS cannot connect to %GHD%
+	set EXIT=7
+	goto Exit
+)
+call :Echo "You are now in interactive offline mode"
+set NET=0
+goto Skip_Script_Update
+
+:Failed_Download
+call :Echo "Failed downloading %DOWNLOAD%^^^!"
+set ERROR=Failed downloading %DOWNLOAD%
+set EXIT=8
+if not !QUIET!==1 if !DFC!==0 pause
+goto Exit
+
 :Admin
-echo You must run this with administrator privileges^^!
+call :Echo "You must run this with administrator privileges^^^!"
 if not !QUIET!==1 if !DFC!==0 pause
 set ERROR=Must be run with administrative permissions
 set EXIT=1
@@ -723,21 +775,18 @@ goto Exit
 
 :Mark
 if !MARKED!==-1 (
-	echo "#### END UNIFIED HOSTS ####" not properly marked in hosts file^^!
+	call :Echo ""#### END UNIFIED HOSTS ####" not properly marked in hosts file^^^!"
 	set ERROR="""#### END UNIFIED HOSTS ####""" not properly marked in hosts file
 	set EXIT=2
 ) else (
 	set ERROR=Hosts file is not properly marked
 	set EXIT=3
 )
-echo.
-echo Hosts file is not properly marked
-echo Please ensure the following lines mark where to insert the blacklist:
-echo.
-echo #### BEGIN UNIFIED HOSTS ####
-echo #### END UNIFIED HOSTS ####
-echo.
-echo Notes: You should only have to mark this once
-echo Updates automatically overwite between the above lines
+call :Echo "Hosts file is not properly marked" ^
+"Please ensure the following lines mark where to insert the blacklist:" ^
+"#### BEGIN UNIFIED HOSTS ####" ^
+"#### END UNIFIED HOSTS ####" ^
+"Notes: You should only have to mark this once" ^
+"Updates automatically overwite between the above lines"
 if not !QUIET!==1 goto Notepad
 goto Exit
