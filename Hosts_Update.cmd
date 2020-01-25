@@ -60,7 +60,7 @@ if "%1"=="/U" (
 	call :Download %GH%/%COMMIT%/README.md "%README%" readme
 	if !DOWNLOAD!==0 (
 		set DOWNLOAD=%GH%/%COMMIT%/README.md
-		goto Exit
+		goto Failed_Download
 	)
 ) else (
 
@@ -97,7 +97,8 @@ rem Create temporary cache if does not exist
 if not exist "%CACHE%" md "%CACHE%"
 
 rem Check general connectivity
-ping %GHD% > nul || goto Connectivity
+echo Checking connectivity to %GHD%...
+ping -n 10 -w 2000 %GHD% > nul || goto Connectivity
 
 rem Begin version checks
 call :Echo "Checking for script updates..."
@@ -130,7 +131,7 @@ if !QUIET!==1 (
 	call :Download %GH%/master/VERSION "%CTEMP%" version
 	if !DOWNLOAD!==0 (
 		set DOWNLOAD=%GH%/master/VERSION
-		goto Exit
+		goto Failed_Download
 	)
 ) else %BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || goto BITS_Connectivity
 
@@ -158,7 +159,7 @@ if not "%OLD%"=="%NEW%%NEW%%COMMIT%" (
 	call :Download %GH%/%COMMIT%/%CMD% "%UPDATE%" update
 	if !DOWNLOAD!==0 (
 		set DOWNLOAD=%GH%/%COMMIT%/%CMD%
-		goto Exit
+		goto Failed_Download
 	)
 	timeout /t 3 /nobreak > nul
 	"%UPDATE%" /U
@@ -310,7 +311,7 @@ if not "%URL%"=="" (
 		call :Download %URL% "%CTEMP%" benchmark
 		if !DOWNLOAD!==0 (
 			set DOWNLOAD=%URL%
-			goto Exit
+			goto Failed_Download
 		)
 	) else %BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :BITS_Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
@@ -436,7 +437,7 @@ if not !REMOVE!==1 (
 	call :Download %URL% "%CTEMP%" hosts
 	if !DOWNLOAD!==0 (
 		set DOWNLOAD=%URL%
-		goto Exit
+		goto Failed_Download
 	)
 )
 
@@ -730,7 +731,6 @@ set /a TIMER=!TIMER!*2
 timeout /t !TIMER! /nobreak > nul
 call :Echo "Download Retry !RETRY!: %3..."
 goto Retry
-exit /b
 
 rem Function to handle script output
 :Echo
@@ -774,9 +774,9 @@ goto Skip_Script_Update
 
 :Failed_Download
 call :Echo "Failed downloading %DOWNLOAD%^^^!"
+if not !QUIET!==1 if !DFC!==0 pause
 set ERROR=Failed downloading %DOWNLOAD%
 set EXIT=8
-if not !QUIET!==1 if !DFC!==0 pause
 goto Exit
 
 :Admin
