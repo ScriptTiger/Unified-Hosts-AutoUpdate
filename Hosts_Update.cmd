@@ -96,9 +96,11 @@ if %BITS%==0 goto BITS
 rem Create temporary cache if does not exist
 if not exist "%CACHE%" md "%CACHE%"
 
-rem Check general connectivity
-echo Checking connectivity to %GHD%...
-ping -n 10 -w 2000 %GHD% > nul || goto Connectivity
+rem If not in quiet mode, check general connectivity
+if not !QUIET!==1 (
+	echo Checking connectivity to %GHD%...
+	ping -n 10 -w 2000 %GHD% > nul || goto Connectivity
+)
 
 rem Begin version checks
 call :Echo "Checking for script updates..."
