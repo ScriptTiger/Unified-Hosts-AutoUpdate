@@ -96,6 +96,9 @@ if %BITS%==0 goto BITS
 rem Create temporary cache if does not exist
 if not exist "%CACHE%" md "%CACHE%"
 
+rem Check general connectivity
+ping %GHD% > nul || goto Connectivity
+
 rem Begin version checks
 call :Echo "Checking for script updates..."
 
@@ -111,6 +114,7 @@ if /i "%OLD:~-1%"=="X" (
 	goto Skip_Script_Update
 )
 
+
 rem Strip out emergency status if present in local version
 if "%OLD:~,1%"=="X" (
 	set OLD=%OLD:~1%
@@ -120,12 +124,16 @@ if "%OLD:~,1%"=="X" (
 rem Combine local version info to single string
 set OLD=%V%%OLD%%COMMIT%
 
-rem Check general connectivity
-ping %GHD% > nul || goto Connectivity
-
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
-%BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || goto BITS_Connectivity
+if !QUIET!==1 (
+	call :Download %GH%/master/VERSION "%CTEMP%" version
+	if !DOWNLOAD!==0 (
+		set DOWNLOAD=%GH%/master/VERSION
+		goto Exit
+	)
+) else %BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || goto BITS_Connectivity
+
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
 	set NEW=%%0
@@ -278,7 +286,7 @@ set OLD=NUL
 
 rem Grab date and URL from the Unified Hosts inside of the local hosts file
 for /f "tokens=*" %%0 in (
-	'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%HOSTS%"'
+	'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%HOSTS%"'
 ) do (
 	set LINE=%%0
 	if "!LINE:~,8!"=="# Date: " set OLD=%%0
@@ -298,10 +306,16 @@ if %NET%==0 goto Skip_Hosts_Checking
 
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
-	%BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :BITS_Connectivity
+	if !QUIET!==1 (
+		call :Download %URL% "%CTEMP%" benchmark
+		if !DOWNLOAD!==0 (
+			set DOWNLOAD=%URL%
+			goto Exit
+		)
+	) else %BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :BITS_Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
-		'findstr /b "#.Date: #.Fetch.the.latest.version.of.this.file:" "%CTEMP%"'
+		'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%CTEMP%"'
 	) do (
 		set LINE=%%0
 		if "!LINE:~,8!"=="# Date: " set NEW=%%0
@@ -706,12 +720,13 @@ rem Function to handle downloads
 :Download
 set RETRY=0
 set DOWNLOAD=0
+set TIMER=10
 :Retry
 %BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% > nul && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
-if !RETRY!==3 exit /b
+if !RETRY!==6 exit /b
 set /a RETRY=!RETRY!+1
-set /a TIMER=!RETRY!*30
 call :Echo "Waiting !TIMER! seconds before retry..."
+set /a TIMER=!TIMER!*2
 timeout /t !TIMER! /nobreak > nul
 call :Echo "Download Retry !RETRY!: %3..."
 goto Retry
