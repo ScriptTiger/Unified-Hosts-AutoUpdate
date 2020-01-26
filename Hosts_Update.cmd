@@ -98,8 +98,9 @@ if not exist "%CACHE%" md "%CACHE%"
 
 rem If not in quiet mode, check general connectivity
 if not !QUIET!==1 (
-	echo Checking connectivity to %GHD%...
+	call :Echo "Checking connectivity to %GHD%..."
 	ping -n 10 -w 2000 %GHD% > nul || goto Connectivity
+	call :Echo "%GHD% reached successfully"
 )
 
 rem Begin version checks
