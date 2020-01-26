@@ -83,21 +83,23 @@ if "%1"=="/U" (
 rem Check for admin rights, exit if none present
 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\Prefetch\" > nul || goto Admin
 
-rem Check access to BITS and set BITS string or report error
-set BITS=0
-bitsadmin /list >> %DEV% && set /a BITS=%BITS%+1
-powershell get-bitstransfer >> %DEV% && set /a BITS=%BITS%+2
-if %BITS% geq 2 (
-	set BITS_FROM=powershell Start-BitsTransfer -source
-	set BITS_TO= -destination
+rem Set order of precedence for downloaders and set downloader strings
+set DOWNLOADER=0
+bitsadmin /list >> %DEV% && set DOWNLOADER=1
+powershell $host.version >> %DEV% && set DOWNLOADER=2
+if %DOWNLOADER%==2 (
+	set DOWNLOADER=PowerShell
+	set DOWNLOADER_FROM=powershell invoke-webrequest
+	set DOWNLOADER_TO= -outfile
 	set Q='
 )
-if %BITS%==1 (
-	set BITS_FROM=bitsadmin /transfer ""
-	set BITS_TO=
+if %DOWNLOADER%==1 (
+	set DOWNLOADER=BITS
+	set DOWNLOADER_FROM=bitsadmin /transfer ""
+	set DOWNLOADER_TO=
 	set Q="
 )
-if %BITS%==0 goto BITS
+if %DOWNLOADER%==0 goto Downloader
 
 rem Create temporary cache if does not exist
 if not exist "%CACHE%" md "%CACHE%"
@@ -142,7 +144,7 @@ if !QUIET!==1 (
 		set DOWNLOAD=%GH%/master/VERSION
 		goto Failed_Download
 	)
-) else %BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% >> %DEV% || goto BITS_Connectivity
+) else %DOWNLOADER_FROM% %GH%/master/VERSION %DOWNLOADER_TO% %Q%%CTEMP%%Q% >> %DEV% || goto Downloader_Connectivity
 
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
@@ -322,7 +324,7 @@ if not "%URL%"=="" (
 			set DOWNLOAD=%URL%
 			goto Failed_Download
 		)
-	) else %BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% >> %DEV% || call :BITS_Connectivity
+	) else %DOWNLOADER_FROM% %URL% %DOWNLOADER_TO% %Q%%CTEMP%%Q% >> %DEV% || goto Downloader_Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%CTEMP%"'
@@ -732,7 +734,7 @@ set RETRY=0
 set DOWNLOAD=0
 set TIMER=10
 :Retry
-%BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% >> %DEV% && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
+%DOWNLOADER_FROM% %1 %DOWNLOADER_TO% %Q%%~2%Q% >> %DEV% && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
 if !RETRY!==6 exit /b
 set /a RETRY=!RETRY!+1
 call :Echo "Waiting !TIMER! seconds before retry..."
@@ -762,18 +764,18 @@ call :Echo "You are now in interactive offline mode"
 set NET=0
 goto Skip_Script_Update
 
-:BITS
-call :Echo "BITS cannot be found" ^
-"This script requires BITS to be installed on you system in order to function"
+:Downloader
+call :Echo "Neither BITS nor PowerShell can be found" ^
+"This script requires either BITS or PowerShell in order to function"
 if not !QUIET!==1 if !DFC!==0 pause
-set ERROR=BITS not installed
+set ERROR=Neither BITS nor PowerShell installed
 set EXIT=6
 goto Exit
 
-:BITS_Connectivity
-call :Echo "BITS cannot connect to %GHD%^^^!"
+:Downloader_Connectivity
+call :Echo "%DOWNLOADER% cannot connect to %GHD%^^^!"
 if !QUIET!==1 (
-	set ERROR=BITS cannot connect to %GHD%
+	set ERROR=D%DOWNLOADER% cannot connect to %GHD%
 	set EXIT=7
 	goto Exit
 )
@@ -782,9 +784,9 @@ set NET=0
 goto Skip_Script_Update
 
 :Failed_Download
-call :Echo "Failed downloading %DOWNLOAD%^^^!"
+call :Echo "%DOWNLOADER% failed downloading %DOWNLOAD%^^^!"
 if not !QUIET!==1 if !DFC!==0 pause
-set ERROR=Failed downloading %DOWNLOAD%
+set ERROR=%DOWNLOADER% failed downloading %DOWNLOAD%
 set EXIT=8
 goto Exit
 

@@ -17,8 +17,7 @@ Extract the contents to the same directory and run the Hosts_Update.cmd script. 
 
 **If you experience problems with performance or seemingly unrelated networking issues after running this script, please try adjusting your compression level to one that best suits your needs.**
 
-**If you're running Windows XP or Windows Sever 2003 and don't have Background Intelligent Transfer Service (BITS) installed, please visit the following link first to find out how to install it. BITS is REQUIRED by this script to function in order to eliminate the need for third-party applications and keep everything native to Microsot Windows.  
-https://support.microsoft.com/en-us/help/923845/an-update-package-for-background-intelligent-transfer-service-bits-is**
+**This script requires either BITS or PowerShell to function. While both are native to modern Microsoft Windows installations, there are also compatible versions which can be manually installed for older systems.**
 
 If you want to ignore or whitelist certain entries from the Unified Hosts and prevent them from appearing in your local hosts, just add them to the ignore.txt. These entries are made with literal expressions and can match all or only part of an entry. So if you want to only ignore one specific URL, it's better to put the whole line just in case. For example, if you want to ignore the `www.google.com` domain specifically, put this:  
 `0.0.0.0 www.google.com`  
@@ -53,8 +52,8 @@ Decimal Error Code | Hexadecimal Error Code | Explanation
 3                  | 0x3                    | Hosts file is not properly marked
 4                  | 0x4                    | Currently disabled due to maintenance, please try again later
 5                  | 0x5                    | Your system cannot connect to GitHub
-6                  | 0x6                    | BITS not installed
-7                  | 0x7                    | BITS cannot connect to GitHub
+6                  | 0x6                    | Neither BITS nor PowerShell installed
+7                  | 0x7                    | Download mechanism cannot connect to GitHub
 8                  | 0x8                    | Download failed
 
 **This script is in active development, so please share your feedback on what you like and don't like so we know what direction to take and don't inadvertently make things worse**
