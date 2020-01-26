@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.35
+set V=1.36
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -39,6 +39,7 @@ set REMOVE=0
 set NET=1
 set EXIT=0
 set DFC=0
+set DEV=nul
 
 rem Check switches and shift over
 :Switches
@@ -46,10 +47,15 @@ set SWITCH=.%~1
 if "%SWITCH:~,2%"=="./" (
 	set SWITCH=%~1
 	if /i "!SWITCH!"=="/dfc" set DFC=1
-	if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
+	if /i "!SWITCH:~,5!"=="/log:" (
+		set LOG=!SWITCH:~5!
+		set DEV="!LOG!"
+	)
 	shift
 	goto Switches
 )
+
+call :Echo "Initializing..."
 
 rem Check if script is returning from being updated and finish update process
 if "%1"=="/U" (
@@ -79,8 +85,8 @@ rem Check for admin rights, exit if none present
 
 rem Check access to BITS and set BITS string or report error
 set BITS=0
-bitsadmin /list > nul && set /a BITS=%BITS%+1
-powershell get-bitstransfer > nul && set /a BITS=%BITS%+2
+bitsadmin /list >> %DEV% && set /a BITS=%BITS%+1
+powershell get-bitstransfer >> %DEV% && set /a BITS=%BITS%+2
 if %BITS% geq 2 (
 	set BITS_FROM=powershell Start-BitsTransfer -source
 	set BITS_TO= -destination
@@ -99,7 +105,7 @@ if not exist "%CACHE%" md "%CACHE%"
 rem If not in quiet mode, check general connectivity
 if not !QUIET!==1 (
 	call :Echo "Checking connectivity to %GHD%..."
-	ping -n 10 -w 2000 %GHD% > nul || goto Connectivity
+	ping -n 10 -w 2000 %GHD% >> !DEV! || goto Connectivity
 	call :Echo "%GHD% reached successfully"
 )
 
@@ -136,7 +142,7 @@ if !QUIET!==1 (
 		set DOWNLOAD=%GH%/master/VERSION
 		goto Failed_Download
 	)
-) else %BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% > nul || goto BITS_Connectivity
+) else %BITS_FROM% %GH%/master/VERSION %BITS_TO% %Q%%CTEMP%%Q% >> %DEV% || goto BITS_Connectivity
 
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
@@ -316,7 +322,7 @@ if not "%URL%"=="" (
 			set DOWNLOAD=%URL%
 			goto Failed_Download
 		)
-	) else %BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% > nul || call :BITS_Connectivity
+	) else %BITS_FROM% %URL% %BITS_TO% %Q%%CTEMP%%Q% >> %DEV% || call :BITS_Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%CTEMP%"'
@@ -522,7 +528,7 @@ rem Overwrite the old hosts with the new one
 timeout /t 3 /nobreak > nul
 
 :Write
-copy "%CHOSTS%" "%HOSTS%" /y > nul
+copy "%CHOSTS%" "%HOSTS%" /y >> %DEV%
 
 rem Make sure the hosts file was placed correctly and take action accordingly
 if !errorlevel!==0 (
@@ -640,7 +646,7 @@ exit /b
 rem Flush the DNS cache
 :Flush
 call :Echo "Flushing local DNS cache..."
-ipconfig /flushdns > nul
+ipconfig /flushdns >> %DEV%
 exit /b
 
 rem Ask to see hosts file before exiting
@@ -653,12 +659,12 @@ choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==2 goto Exit
 set PROGID=
 set CMDVIEWTEXT=
-reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID > nul
+reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID >> %DEV%
 if !errorlevel!==0 (
 	for /f "tokens=3" %%a in (
 		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
 	) do set PROGID=%%a
-	ftype !PROGID! > nul
+	ftype !PROGID! >> !DEV!
 	if !errorlevel!==0 (
 		for /f "tokens=2 delims==" %%a in (
 			'ftype !PROGID!'
@@ -726,7 +732,7 @@ set RETRY=0
 set DOWNLOAD=0
 set TIMER=10
 :Retry
-%BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% > nul && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
+%BITS_FROM% %1 %BITS_TO% %Q%%~2%Q% >> %DEV% && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
 if !RETRY!==6 exit /b
 set /a RETRY=!RETRY!+1
 call :Echo "Waiting !TIMER! seconds before retry..."
