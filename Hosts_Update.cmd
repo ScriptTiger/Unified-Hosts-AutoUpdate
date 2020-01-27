@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.37
+set V=1.38
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -274,7 +274,7 @@ if !MARKED!==2 (
 				set REMOVE=1
 				call :File
 				call :Flush
-				goto Notepad
+				goto View_Hosts
 			)
 			goto Exit
 		)
@@ -422,7 +422,7 @@ if not !QUIET!==1 (
 		choice.exe /m "Would you like to open the Task Scheduler now?"
 		if !errorlevel!==1 start taskschd.msc
 	)
-	goto Notepad
+	goto View_Hosts
 )
 goto Exit
 
@@ -632,13 +632,17 @@ call :Execute ipconfig /flushdns
 exit /b
 
 rem Ask to see hosts file before exiting
-:Notepad
-
+:View_Hosts
 rem If running in interactive offline mode and a scheduled task exists, run task before opening notepad
 if !NET!==0 if !TASK!==1 goto Run
 
 choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==2 goto Exit
+call :View_TextFile "%HOSTS%"
+goto Exit
+
+rem Function to view text files
+:View_TextFile
 set PROGID=
 set CMDVIEWTEXT=
 call :Execute reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID
@@ -660,11 +664,11 @@ if !errorlevel!==0 (
 	)
 	if not "!CMDVIEWTEXT!"=="" (
 		for /f "tokens=* usebackq" %%a in (
-			`echo "!CMDVIEWTEXT:%%1=%HOSTS%!"`
+			`echo "!CMDVIEWTEXT:%%1=%1!"`
 		) do start "" %%~a
-	) else start notepad %HOSTS%
-) else start notepad %HOSTS%
-goto Exit
+	) else start notepad %1
+) else start notepad %1
+exit /b
 
 rem Function to handle script exits
 :Exit
@@ -674,9 +678,6 @@ if exist "%CACHE%" (
 	rmdir /s /q "%CACHE%"
 )
 
-rem Set the DFC switch if applicable
-if %DFC%==1 set EXIT=/b %EXIT%
-
 rem Display any error dialog if applicable
 if not %EXIT%==0 (
 	if %QUIET%==1 (
@@ -685,13 +686,24 @@ if not %EXIT%==0 (
 			echo.
 			echo ERROR: %ERROR%^^!
 			echo.
-			echo Refer to the README for debugging tips, such as using the /log argument.
+			if not "%LOG%"=="" (
+				echo Refer to your log file for more information:
+				echo "%LOG%"
+			) else echo Refer to the README for debugging tips, such as using the /log argument.
 		) | msg * /time:86400
 	) else (
-		echo Refer to the README for debugging tips, such as using the /log argument.
-		if !DFC!==0 pause
+		if "%LOG%"=="" (
+			echo Refer to the README for debugging tips, such as using the /log argument.
+			if %DFC%==0 pause
+		) else (
+			choice.exe /m "Would you like to open your log file before exiting?"
+			if !errorlevel!==1 call :View_TextFile "%LOG%"
+		)
 	)
 )
+
+rem Set the DFC switch if applicable
+if %DFC%==1 set EXIT=/b %EXIT%
 
 rem If not locked and a downloaded update is available, replace the old script with the new one and exit
 if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit %EXIT%
@@ -711,7 +723,7 @@ if not exist "%SCACHE%" (
 	call :Echo "Update task has completed"
 	set TASK=3
 	del /q "%LOCK%"
-	goto Notepad
+	goto View_Hosts
 )
 goto Run_Wait
 
@@ -802,5 +814,5 @@ call :Echo "Hosts file is not properly marked" ^
 "#### END UNIFIED HOSTS ####" ^
 "Notes: You should only have to mark this once" ^
 "Updates automatically overwite between the above lines"
-if not !QUIET!==1 goto Notepad
+if not !QUIET!==1 goto View_Hosts
 goto Exit
