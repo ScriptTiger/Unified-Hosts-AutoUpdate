@@ -40,7 +40,7 @@ This will disable the script from checking for script updates and attempting to 
 
 By default the script forces the command processor instance to close upon completion just to ensure you don't have an unattended command prompt with administrative permissions lingering where it's not needded. However, for debugging or other purposes you can send `/DFC` as an initial argument to prevent the command prompt from closing after script completion. For further debugging, please reference the following error code table.
 
-For further debugging, you can also send `/LOG:<file>` as an initial argument to write to a log file.
+For further debugging, you can also send `/LOG` as an initial argument to write a log file to `log.txt` within the script home directory. You also have the option of alternatively using `/LOG:<file>` to write the log to a directory and file of your choosing.
 
 **Please note, all initial arguments (`/DFC`,`/LOG:<file>`, etc.) must be placed before the URL and compression parameters (i.e. `Hosts_update.cmd /DFC <URL>`).**
 

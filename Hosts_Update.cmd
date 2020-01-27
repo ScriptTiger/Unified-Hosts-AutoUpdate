@@ -39,7 +39,6 @@ set REMOVE=0
 set NET=1
 set EXIT=0
 set DFC=0
-set DEV=nul
 
 rem Check switches and shift over
 :Switches
@@ -47,13 +46,16 @@ set SWITCH=.%~1
 if "%SWITCH:~,2%"=="./" (
 	set SWITCH=%~1
 	if /i "!SWITCH!"=="/dfc" set DFC=1
-	if /i "!SWITCH:~,5!"=="/log:" (
-		set LOG=!SWITCH:~5!
-		set DEV="!LOG!"
-	)
+	if /i "!SWITCH!"=="/log" set LOG=%~dp0log.txt
+	if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
 	shift
 	goto Switches
 )
+
+rem Set the logging mechanism
+if "%LOG%"=="" (
+	set DEV=nul
+) else set DEV="%LOG%"
 
 call :Echo "Initializing..."
 
