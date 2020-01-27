@@ -26,6 +26,7 @@ set UPDATE=%~dp0Update.cmd
 set CMD=Hosts_Update.cmd
 set CMDDIR=%~dp0
 set LOCK=%~dp0lock
+set LOGD=%~dp0log.txt
 set SELF=%~f0
 set GHD=raw.githubusercontent.com
 set GH=https://%GHD%/ScriptTiger/Unified-Hosts-AutoUpdate
@@ -46,7 +47,7 @@ set SWITCH=.%~1
 if "%SWITCH:~,2%"=="./" (
 	set SWITCH=%~1
 	if /i "!SWITCH!"=="/dfc" set DFC=1
-	if /i "!SWITCH!"=="/log" set LOG=%~dp0log.txt
+	if /i "!SWITCH!"=="/log" set LOG=!LOGD!
 	if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
 	shift
 	goto Switches
@@ -150,7 +151,6 @@ rem Check for emergency stop status
 if "%NEW:~,1%"=="X" (
 	call :Echo "**We are currently working to fix a problem**" ^
 	"**Please try again later**"
-	if not !QUIET!==1 if !DFC!==0 pause
 	set ERROR=Currently disabled due to maintenance, please try again later
 	set EXIT=4
 	goto Exit
@@ -668,15 +668,6 @@ goto Exit
 
 rem Function to handle script exits
 :Exit
-rem Attempt to open error dialog if applicable
-if %QUIET%==1 if not %EXIT%==0 (
-	(
-		echo ***** Unified Hosts AutoUpdate *****
-		echo.
-		echo ERROR: %ERROR%^^!
-	) | msg * /time:86400
-)
-
 rem Clean up temporary files if they exist
 if exist "%CACHE%" (
 	call :Echo "Cleaning temporary files..."
@@ -685,6 +676,22 @@ if exist "%CACHE%" (
 
 rem Set the DFC switch if applicable
 if %DFC%==1 set EXIT=/b %EXIT%
+
+rem Display any error dialog if applicable
+if not %EXIT%==0 (
+	if %QUIET%==1 (
+		(
+			echo ***** Unified Hosts AutoUpdate *****
+			echo.
+			echo ERROR: %ERROR%^^!
+			echo.
+			echo Refer to the README for debugging tips, such as using the /log argument.
+		) | msg * /time:86400
+	) else (
+		echo Refer to the README for debugging tips, such as using the /log argument.
+		if !DFC!==0 pause
+	)
+)
 
 rem If not locked and a downloaded update is available, replace the old script with the new one and exit
 if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit %EXIT%
@@ -753,7 +760,6 @@ goto Skip_Script_Update
 :Downloader
 call :Echo "Neither BITS nor PowerShell can be found" ^
 "This script requires either BITS or PowerShell in order to function"
-if not !QUIET!==1 if !DFC!==0 pause
 set ERROR=Neither BITS nor PowerShell installed
 set EXIT=6
 goto Exit
@@ -771,14 +777,12 @@ goto Skip_Script_Update
 
 :Failed_Download
 call :Echo "%DOWNLOADER% failed downloading %DOWNLOAD%^^^!"
-if not !QUIET!==1 if !DFC!==0 pause
 set ERROR=%DOWNLOADER% failed downloading %DOWNLOAD%
 set EXIT=8
 goto Exit
 
 :Admin
 call :Echo "You must run this with administrator privileges^^^!"
-if not !QUIET!==1 if !DFC!==0 pause
 set ERROR=Must be run with administrative permissions
 set EXIT=1
 goto Exit
