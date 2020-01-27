@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.36
+set V=1.37
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -63,11 +63,7 @@ if "%1"=="/U" (
 	call :Echo "The updated script has been loaded"
 	echo %NEW% %COMMIT%>"%VERSION%"
 	if exist "%README%" del /q "%README%"
-	call :Download %GH%/%COMMIT%/README.md "%README%" readme
-	if !DOWNLOAD!==0 (
-		set DOWNLOAD=%GH%/%COMMIT%/README.md
-		goto Failed_Download
-	)
+	call :Download %GH%/%COMMIT%/README.md "%README%" readme || goto Failed_Download
 ) else (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
@@ -85,8 +81,8 @@ rem Check for admin rights, exit if none present
 
 rem Set order of precedence for downloaders and set downloader strings
 set DOWNLOADER=0
-bitsadmin /list >> %DEV% && set DOWNLOADER=1
-powershell $host.version >> %DEV% && set DOWNLOADER=2
+call :Execute bitsadmin /list && set DOWNLOADER=1
+call :Execute powershell $host.version && set DOWNLOADER=2
 if %DOWNLOADER%==2 (
 	set DOWNLOADER=PowerShell
 	set DOWNLOADER_FROM=powershell invoke-webrequest
@@ -107,7 +103,7 @@ if not exist "%CACHE%" md "%CACHE%"
 rem If not in quiet mode, check general connectivity
 if not !QUIET!==1 (
 	call :Echo "Checking connectivity to %GHD%..."
-	ping -n 10 -w 2000 %GHD% >> !DEV! || goto Connectivity
+	call :Execute ping -n 10 -w 2000 %GHD% || goto Connectivity
 	call :Echo "%GHD% reached successfully"
 )
 
@@ -139,12 +135,8 @@ set OLD=%V%%OLD%%COMMIT%
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
 if !QUIET!==1 (
-	call :Download %GH%/master/VERSION "%CTEMP%" version
-	if !DOWNLOAD!==0 (
-		set DOWNLOAD=%GH%/master/VERSION
-		goto Failed_Download
-	)
-) else %DOWNLOADER_FROM% %GH%/master/VERSION %DOWNLOADER_TO% %Q%%CTEMP%%Q% >> %DEV% || goto Downloader_Connectivity
+	call :Download %GH%/master/VERSION "%CTEMP%" version || goto Failed_Download
+) else call :Execute %DOWNLOADER_FROM% %GH%/master/VERSION %DOWNLOADER_TO% %Q%%CTEMP%%Q% || goto Downloader_Connectivity
 
 rem Grab remote script version and commit
 for /f "tokens=1,2" %%0 in ('type "%CTEMP%"') do (
@@ -167,11 +159,7 @@ if not "%OLD%"=="%NEW%%NEW%%COMMIT%" (
 	call :Echo "A new script update is available^^^!" ^
 	"Updating script..."
 	timeout /t 3 /nobreak > nul
-	call :Download %GH%/%COMMIT%/%CMD% "%UPDATE%" update
-	if !DOWNLOAD!==0 (
-		set DOWNLOAD=%GH%/%COMMIT%/%CMD%
-		goto Failed_Download
-	)
+	call :Download %GH%/%COMMIT%/%CMD% "%UPDATE%" update || goto Failed_Download
 	timeout /t 3 /nobreak > nul
 	"%UPDATE%" /U
 ) else call :Echo "Your script is up to date"
@@ -319,12 +307,8 @@ if %NET%==0 goto Skip_Hosts_Checking
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
 	if !QUIET!==1 (
-		call :Download %URL% "%CTEMP%" benchmark
-		if !DOWNLOAD!==0 (
-			set DOWNLOAD=%URL%
-			goto Failed_Download
-		)
-	) else %DOWNLOADER_FROM% %URL% %DOWNLOADER_TO% %Q%%CTEMP%%Q% >> %DEV% || goto Downloader_Connectivity
+		call :Download %URL% "%CTEMP%" benchmark || goto Failed_Download
+	) else call :Execute %DOWNLOADER_FROM% %URL% %DOWNLOADER_TO% %Q%%CTEMP%%Q% || goto Downloader_Connectivity
 	if !NET!==0 goto Skip_Hosts_Checking
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%CTEMP%"'
@@ -444,13 +428,7 @@ rem File writing function
 :File
 
 rem If updating/installing, download the target hosts file to cache
-if not !REMOVE!==1 (
-	call :Download %URL% "%CTEMP%" hosts
-	if !DOWNLOAD!==0 (
-		set DOWNLOAD=%URL%
-		goto Failed_Download
-	)
-)
+if not !REMOVE!==1 call :Download %URL% "%CTEMP%" hosts || goto Failed_Download
 
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
@@ -530,7 +508,7 @@ rem Overwrite the old hosts with the new one
 timeout /t 3 /nobreak > nul
 
 :Write
-copy "%CHOSTS%" "%HOSTS%" /y >> %DEV%
+call :Execute copy "%CHOSTS%" "%HOSTS%" /y
 
 rem Make sure the hosts file was placed correctly and take action accordingly
 if !errorlevel!==0 (
@@ -648,7 +626,7 @@ exit /b
 rem Flush the DNS cache
 :Flush
 call :Echo "Flushing local DNS cache..."
-ipconfig /flushdns >> %DEV%
+call :Execute ipconfig /flushdns
 exit /b
 
 rem Ask to see hosts file before exiting
@@ -661,12 +639,12 @@ choice.exe /m "Would you like to open your current hosts file before exiting?"
 if !errorlevel!==2 goto Exit
 set PROGID=
 set CMDVIEWTEXT=
-reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID >> %DEV%
+call :Execute reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID
 if !errorlevel!==0 (
 	for /f "tokens=3" %%a in (
 		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
 	) do set PROGID=%%a
-	ftype !PROGID! >> !DEV!
+	call :Execute ftype !PROGID!
 	if !errorlevel!==0 (
 		for /f "tokens=2 delims==" %%a in (
 			'ftype !PROGID!'
@@ -730,12 +708,12 @@ goto Run_Wait
 
 rem Function to handle downloads
 :Download
+set DOWNLOAD=%1
 set RETRY=0
-set DOWNLOAD=0
 set TIMER=10
 :Retry
-%DOWNLOADER_FROM% %1 %DOWNLOADER_TO% %Q%%~2%Q% >> %DEV% && (set DOWNLOAD=1 & call :Echo "Downloaded %3 successfully" & exit /b)
-if !RETRY!==6 exit /b
+call :Execute %DOWNLOADER_FROM% %1 %DOWNLOADER_TO% %Q%%~2%Q% && (call :Echo "Downloaded %3 successfully" & exit /b)
+if !RETRY!==6 exit /b 1
 set /a RETRY=!RETRY!+1
 call :Echo "Waiting !TIMER! seconds before retry..."
 set /a TIMER=!TIMER!*2
@@ -745,10 +723,16 @@ goto Retry
 
 rem Function to handle script output
 :Echo
-echo %~1
-if not "%LOG%"=="" echo %DATE% @ %TIME%: %~1>>"%LOG%"
+echo %~1>con
+echo %DATE% @ %TIME%: %~1>>%DEV%
 shift
 if not "%~1"=="" goto Echo
+exit /b
+
+rem Function to log executions
+:Execute
+echo %DATE% @ %TIME%: Executing: %*>>%DEV%
+%*>>%DEV% || exit /b 1
 exit /b
 
 rem Error handling functions
