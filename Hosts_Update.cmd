@@ -650,23 +650,18 @@ if !errorlevel!==0 (
 	for /f "tokens=3" %%a in (
 		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
 	) do set PROGID=%%a
-	call :Execute ftype !PROGID!
-	if !errorlevel!==0 (
+	if "!PROGID:~,13!"=="Applications\" (
+		for /f "tokens=2*" %%a in (
+			'reg query HKCR\!PROGID!\shell\open\command'
+		) do set CMDVIEWTEXT=%%b
+	) else (
 		for /f "tokens=2 delims==" %%a in (
 			'ftype !PROGID!'
 		) do set CMDVIEWTEXT=%%a
-	) else (
-		if "!PROGID:~,13!"=="Applications\" (
-			for /f "tokens=2*" %%a in (
-				'reg query HKCR\!PROGID!\shell\open\command'
-			) do set CMDVIEWTEXT=%%b
-		)
 	)
-	if not "!CMDVIEWTEXT!"=="" (
-		for /f "tokens=* usebackq" %%a in (
-			`echo "!CMDVIEWTEXT:%%1=%1!"`
-		) do start "" %%~a
-	) else start notepad %1
+	for /f "tokens=* usebackq" %%a in (
+		`echo "!CMDVIEWTEXT:%%1=%1!"`
+	) do start "" %%~a
 ) else start notepad %1
 exit /b
 
