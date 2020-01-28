@@ -302,14 +302,14 @@ for /f "tokens=*" %%0 in (
 rem If the markings are there but no Unified Hosts, skip the rest of the check and continue to update
 if "%OLD%"=="NUL" goto Update
 
-if %NET%==0 goto Skip_Hosts_Checking
+if %NET%==0 goto Update
 
 rem Grab date and URL from remote Unified Hosts
 if not "%URL%"=="" (
 	if !QUIET!==1 (
 		call :Download %URL% "%CTEMP%" benchmark || goto Failed_Download
 	) else call :Execute %DOWNLOADER_FROM% %URL% %DOWNLOADER_TO% %Q%%CTEMP%%Q% || goto Downloader_Connectivity
-	if !NET!==0 goto Skip_Hosts_Checking
+	if !NET!==0 goto Update
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%CTEMP%"'
 	) do (
@@ -332,8 +332,6 @@ if "%OLD%"=="%NEW%" (
 	choice.exe /M "Would you like to update anyway?"
 	if !errorlevel!==2 goto Exit
 ) else call :Echo "A new Unified Hosts update is available^^^!"
-
-:Skip_Hosts_Checking
 
 rem Function to update current local hosts with current Unified Hosts
 :Update
