@@ -36,7 +36,6 @@ set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
 set TASKER=%SYSTEMROOT%\System32\schtasks.exe
 set TN=Unified Hosts AutoUpdate
 set HASHER=%SYSTEMROOT%\System32\certutil.exe
-set REMOVE=0
 set NET=1
 set EXIT=0
 set DFC=0
@@ -271,8 +270,7 @@ if !MARKED!==2 (
 		if !errorlevel!==2 (
 			choice.exe /M "Would you like to remove the Unified Hosts from your local hosts file?"
 			if !errorlevel!==1 (
-				set REMOVE=1
-				call :File
+				call :File 1
 				call :Flush
 				goto View_Hosts
 			)
@@ -395,7 +393,7 @@ if not !QUIET!==1 (
 if %NET%==0 goto Skip_Hosts_Update
 
 call :Echo "Updating the hosts file..."
-call :File
+call :File 0
 call :Flush
 
 :Skip_Hosts_Update
@@ -430,7 +428,7 @@ rem File writing function
 :File
 
 rem If updating/installing, download the target hosts file to cache
-if not !REMOVE!==1 call :Download %URL% "%CTEMP%" hosts || goto Failed_Download
+if not %1==1 call :Download %URL% "%CTEMP%" hosts || goto Failed_Download
 
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
@@ -461,7 +459,7 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 				if /i not "%%b"=="#### BEGIN UNIFIED HOSTS ####" echo %%b
 			)
 			if /i "%%b"=="#### BEGIN UNIFIED HOSTS ####" (
-				if not !REMOVE!==1 (
+				if not %1==1 (
 					echo %%b
 					echo # Managed by ScriptTiger's Unified Hosts AutoUpdate
 					echo # https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
@@ -493,7 +491,7 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 			)
 		)
 		if /i "%%b"=="#### END UNIFIED HOSTS ####" (
-			if not !REMOVE!==1 (
+			if not %1==1 (
 				echo #
 				type "%CUSTOM%"
 				for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%CUSTOM%"') do set NTF=%%1
@@ -514,7 +512,7 @@ call :Execute copy "%CHOSTS%" "%HOSTS%" /y
 
 rem Make sure the hosts file was placed correctly and take action accordingly
 if !errorlevel!==0 (
-	if !REMOVE!==1 (
+	if %1==1 (
 		call :Echo "The Unified Hosts has been removed"
 	) else (
 		call :Echo "Your Unified Hosts has been updated"
