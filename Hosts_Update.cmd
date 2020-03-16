@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.38
+set V=1.39
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -52,10 +52,12 @@ if "%SWITCH:~,2%"=="./" (
 	goto Switches
 )
 
-rem Set the logging mechanism
-if "%LOG%"=="" (
-	set DEV=nul
-) else set DEV="%LOG%"
+rem Set logging mechanism
+if exist "%LOCK%" (
+	set /p LOG=<"%LOCK%"
+	set LOG=!LOG:"=!
+)
+if "%LOG%"=="" set LOG=nul
 
 call :Echo "Initializing..."
 
@@ -71,11 +73,19 @@ if "%1"=="/U" (
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
 	rem Initialize QUIET to off/0
 
-	if not "%1"=="" (
-		set URL=%1
+	if "%1"=="" (
+		set URLD=
+		set QUIET=0
+		if exist "%LOCK%" del /q "%LOCK%"
+	) else (
+		set URLD=%1
 		set QUIET=1
 		if not "%2"=="" set NEWCOMP=%2
-	) else set QUIET=0
+		if "%LOG%"=="nul" (
+			set LOG=%LOGD%
+			echo %DATE% @ %TIME%: Initializing...>"!LOG!"
+		)
+	)
 )
 
 rem Check for admin rights, exit if none present
@@ -285,37 +295,37 @@ rem Initialize OLD to NUL in case markings are present but not Unified Hosts
 set OLD=NUL
 
 rem Grab date and URL from the Unified Hosts inside of the local hosts file
+set URL=
 for /f "tokens=*" %%0 in (
 	'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%HOSTS%"'
 ) do (
 	set LINE=%%0
 	if "!LINE:~,8!"=="# Date: " set OLD=%%0
 	if "!LINE:~,8!"=="# Fetch " (
-		set OLD=!OLD!%%0
-		if not !QUIET!==1 (
-			set URL=%%0
-			set URL=!URL:~41!
-		)
+		set URL=!LINE:~41!
+		if not !QUIET!==1 set URLD=!URL!
 	)
 )
+
+rem If the old URL doesn't match the new URL of a scheduled task, update
+if !QUIET!==1 if not "%URLD%"=="%URL%" goto Update
 
 rem If the markings are there but no Unified Hosts, skip the rest of the check and continue to update
 if "%OLD%"=="NUL" goto Update
 
 if %NET%==0 goto Update
 
-rem Grab date and URL from remote Unified Hosts
-if not "%URL%"=="" (
+rem Grab date from remote Unified Hosts
+if not "%URLD%"=="" (
 	if !QUIET!==1 (
-		call :Download %URL% "%CTEMP%" benchmark || goto Failed_Download
-	) else call :Execute %DOWNLOADER_FROM% %URL% %DOWNLOADER_TO% %Q%%CTEMP%%Q% || goto Downloader_Connectivity
+		call :Download %URLD% "%CTEMP%" benchmark || goto Failed_Download
+	) else call :Execute %DOWNLOADER_FROM% %URLD% %DOWNLOADER_TO% %Q%%CTEMP%%Q% || goto Downloader_Connectivity
 	if !NET!==0 goto Update
 	for /f "tokens=*" %%0 in (
 		'findstr /b "#.Date:. #.Fetch.the.latest.version.of.this.file:.%BASE%/....." "%CTEMP%"'
 	) do (
 		set LINE=%%0
 		if "!LINE:~,8!"=="# Date: " set NEW=%%0
-		if "!LINE:~,8!"=="# Fetch " set NEW=!NEW!%%0
 	)
 ) else set NEW=NUL
 
@@ -340,7 +350,7 @@ if not !QUIET!==1 (
 
 	if "%URL:~-6%"=="/hosts" (
 		call :Echo "Your current preset is to use the following Unified Hosts:" ^
-		"echo %URL%"
+		"%URL%"
 		choice.exe /m "Would you like to just stick with that?"
 		if !errorlevel!==1 goto Skip_Choice
 	)
@@ -370,9 +380,6 @@ if not !QUIET!==1 (
 		) else set URL=%BASE%/hosts
 	) else set URL=%BASE%/hosts
 )
-
-rem If the URL is still not complete by this point, just set the default as the basic Unified Hosts with no extensions
-if not "%URL:~-6%"=="/hosts" set URL=%BASE%/hosts
 
 :Skip_Choice
 
@@ -425,8 +432,11 @@ goto Exit
 rem File writing function
 :File
 
-rem If updating/installing, download the target hosts file to cache
-if not %1==1 call :Download %URL% "%CTEMP%" hosts || goto Failed_Download
+rem If updating/installing, download the target hosts file to cache if not already downloaded
+if not "%URLD%"=="%URL%" (
+	if !QUIET!==1 set URL=%URLD%
+	call :Download !URL! "%CTEMP%" hosts || goto Failed_Download
+)
 
 rem To be disabled later to skip old hosts section, and then re-enable to continue after #### END UNIFIED HOSTS ####
 set WRITE=1
@@ -677,13 +687,13 @@ if not %EXIT%==0 (
 			echo.
 			echo ERROR: %ERROR%^^!
 			echo.
-			if not "%LOG%"=="" (
+			if not "%LOG%"=="nul" (
 				echo Refer to your log file for more information:
 				echo "%LOG%"
 			) else echo Refer to the README for debugging tips, such as using the /log argument.
 		) | msg * /time:86400
 	) else (
-		if "%LOG%"=="" (
+		if "%LOG%"=="nul" (
 			echo Refer to the README for debugging tips, such as using the /log argument.
 			if %DFC%==0 pause
 		) else (
@@ -704,11 +714,14 @@ rem Function for running a scheduled task from script before exiting
 :Run
 rem Lock the running script from being replaced by an update during the triggered task
 rem Unlock later and replace running script with update if exists before exit
-echo lock > "%LOCK%"
+echo "%LOG%">"%LOCK%"
 call :Echo "Activating update task..."
 schtasks /run /tn "%TN%"
-call :Echo "Update task running..."
-:Run_Wait
+:Run_Wait_Start
+timeout /t 5 /nobreak > nul
+if not exist "%SCACHE%" goto Run_Wait_Start
+call :Echo "Update task is running..."
+:Run_Wait_Stop
 timeout /t 5 /nobreak > nul
 if not exist "%SCACHE%" (
 	call :Echo "Update task has completed"
@@ -716,7 +729,7 @@ if not exist "%SCACHE%" (
 	del /q "%LOCK%"
 	goto View_Hosts
 )
-goto Run_Wait
+goto Run_Wait_Stop
 
 rem Function to handle downloads
 :Download
@@ -736,15 +749,15 @@ goto Retry
 rem Function to handle script output
 :Echo
 echo %~1>con
-echo %DATE% @ %TIME%: %~1>>%DEV%
+echo %DATE% @ %TIME%: %~1>>%LOG%
 shift
 if not "%~1"=="" goto Echo
 exit /b
 
 rem Function to log executions
 :Execute
-echo %DATE% @ %TIME%: Executing: %*>>%DEV%
-%*>>%DEV% || exit /b 1
+echo %DATE% @ %TIME%: Executing: %*>>%LOG%
+%*>>%LOG% || exit /b 1
 exit /b
 
 rem Error handling functions

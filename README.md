@@ -40,7 +40,7 @@ This will disable the script from checking for script updates and attempting to 
 
 By default the script forces the command processor instance to close upon completion just to ensure you don't have an unattended command prompt with administrative permissions lingering where it's not needded. However, for debugging or other purposes you can send `/DFC` as an initial argument to prevent the command prompt from closing after script completion. For further debugging, please reference the following error code table.
 
-For further debugging, you can also send `/LOG` as an initial argument to write a log file to `log.txt` within the script home directory. You also have the option of alternatively using `/LOG:<file>` to write the log to a directory and file of your choosing.
+By default log entries are only kept from the most recent scheduled task in the  `log.txt` within the script home directory. However, for persistent logging you can also send `/LOG` as an initial argument to force writing a persistent log that always logs everything and never clears the log. You also have the option of alternatively using `/LOG:<file>` to write a persistent log to a directory and file of your choosing. If you choose to configure persistent logging, please remember that managing that logging and associated file sizes then becomes your own responsibility.
 
 **Please note, all initial arguments (`/DFC`,`/LOG:<file>`, etc.) must be placed before the URL and compression parameters (i.e. `Hosts_update.cmd /DFC <URL>`).**
 
@@ -55,6 +55,7 @@ Decimal Error Code | Hexadecimal Error Code | Explanation
 6                  | 0x6                    | Neither BITS nor PowerShell installed
 7                  | 0x7                    | Download mechanism cannot connect to GitHub
 8                  | 0x8                    | Download failed
+255                | 0xFF                   | The script terminated unexpectedly
 
 **This script is in active development, so please share your feedback on what you like and don't like so we know what direction to take and don't inadvertently make things worse**
 
