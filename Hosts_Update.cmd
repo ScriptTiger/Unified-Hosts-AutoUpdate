@@ -676,6 +676,7 @@ rem Function to handle script exits
 rem Clean up temporary files if they exist
 if exist "%CACHE%" (
 	call :Echo "Cleaning temporary files..."
+	if not exist "%LOCK%" echo ----->>"%LOG%"
 	rmdir /s /q "%CACHE%"
 )
 
@@ -714,7 +715,7 @@ rem Function for running a scheduled task from script before exiting
 :Run
 rem Lock the running script from being replaced by an update during the triggered task
 rem Unlock later and replace running script with update if exists before exit
-echo "%LOG%">"%LOCK%"
+echo "%LOG:"=%">"%LOCK%"
 call :Echo "Activating update task..."
 schtasks /run /tn "%TN%"
 :Run_Wait_Start
@@ -749,15 +750,15 @@ goto Retry
 rem Function to handle script output
 :Echo
 echo %~1>con
-echo %DATE% @ %TIME%: %~1>>%LOG%
+echo %DATE% @ %TIME%: %~1>>"%LOG%"
 shift
 if not "%~1"=="" goto Echo
 exit /b
 
 rem Function to log executions
 :Execute
-echo %DATE% @ %TIME%: Executing: %*>>%LOG%
-%*>>%LOG% || exit /b 1
+echo %DATE% @ %TIME%: Executing: %*>>"%LOG%"
+%*>>"%LOG%" || exit /b 1
 exit /b
 
 rem Error handling functions
