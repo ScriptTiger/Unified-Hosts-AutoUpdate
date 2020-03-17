@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.39
+set V=1.40
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -42,15 +42,17 @@ set DFC=0
 
 rem Check switches and shift over
 :Switches
-set SWITCH=.%~1
-if "%SWITCH:~,2%"=="./" (
-	set SWITCH=%~1
-	set SWITCH=!SWITCH:"=!
-	if /i "!SWITCH!"=="/dfc" set DFC=1
-	if /i "!SWITCH!"=="/log" set LOG=!LOGD!
-	if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
-	shift
-	goto Switches
+if not "%SWITCH%"=="/U" (
+	set SWITCH=.%~1
+	if "%SWITCH:~,2%"=="./" (
+		set SWITCH=%~1
+		set SWITCH=!SWITCH:"=!
+		if /i "!SWITCH!"=="/dfc" set DFC=1
+		if /i "!SWITCH!"=="/log" set LOG=!LOGD!
+		if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
+		shift
+		goto Switches
+	)
 )
 
 rem Set logging mechanism
@@ -63,7 +65,7 @@ if "%LOG%"=="" set LOG=nul
 call :Echo "Initializing..."
 
 rem Check if script is returning from being updated and finish update process
-if "%1"=="/U" (
+if "%~1"=="/U" (
 	cls
 	call :Echo "The updated script has been loaded"
 	echo %NEW% %COMMIT%>"%VERSION%"
