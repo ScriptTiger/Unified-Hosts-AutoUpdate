@@ -42,7 +42,7 @@ set DFC=0
 
 rem Check switches and shift over
 :Switches
-if not "%SWITCH%"=="/U" (
+if not "%~1"=="/U" (
 	set SWITCH=.%~1
 	if "%SWITCH:~,2%"=="./" (
 		set SWITCH=%~1
