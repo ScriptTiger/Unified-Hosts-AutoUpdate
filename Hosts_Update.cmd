@@ -45,6 +45,7 @@ rem Check switches and shift over
 set SWITCH=.%~1
 if "%SWITCH:~,2%"=="./" (
 	set SWITCH=%~1
+	set SWITCH=!SWITCH:"=!
 	if /i "!SWITCH!"=="/dfc" set DFC=1
 	if /i "!SWITCH!"=="/log" set LOG=!LOGD!
 	if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
