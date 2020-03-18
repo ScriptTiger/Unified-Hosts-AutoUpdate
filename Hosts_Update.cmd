@@ -728,7 +728,6 @@ timeout /t 5 /nobreak > nul
 if not exist "%LOCK%" (
 	call :Echo "Update task has completed"
 	set TASK=3
-	del /q "%LOCK%"
 	goto View_Hosts
 )
 goto Run_Wait
