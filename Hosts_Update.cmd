@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.40
+set V=1.41
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -711,7 +711,8 @@ rem Set the DFC switch if applicable
 if %DFC%==1 set EXIT=/b %EXIT%
 
 rem If not locked and a downloaded update is available, replace the old script with the new one and exit
-if not exist "%LOCK%" if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit %EXIT%
+if exist "%LOCK%" (del /q "%LOCK%"
+) else if exist "%UPDATE%" del /q "%CMDDIR%%CMD%"&ren "%UPDATE%" "%CMD%"&exit %EXIT%
 exit %EXIT%
 
 rem Function for running a scheduled task from script before exiting
@@ -721,19 +722,16 @@ rem Unlock later and replace running script with update if exists before exit
 echo "%LOG:"=%">"%LOCK%"
 call :Echo "Activating update task..."
 schtasks /run /tn "%TN%"
-:Run_Wait_Start
-timeout /t 5 /nobreak > nul
-if not exist "%SCACHE%" goto Run_Wait_Start
 call :Echo "Update task is running..."
-:Run_Wait_Stop
+:Run_Wait
 timeout /t 5 /nobreak > nul
-if not exist "%SCACHE%" (
+if not exist "%LOCK%" (
 	call :Echo "Update task has completed"
 	set TASK=3
 	del /q "%LOCK%"
 	goto View_Hosts
 )
-goto Run_Wait_Stop
+goto Run_Wait
 
 rem Function to handle downloads
 :Download
