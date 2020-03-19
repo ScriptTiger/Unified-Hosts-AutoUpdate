@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.41
+set V=1.42
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -269,11 +269,13 @@ if !MARKED!==0 (
 		choice.exe /m "Automatically insert the Unified Hosts at the bottom of your local hosts?"
 		if !ERRORLEVEL!==2 goto Mark
 	)
-	for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
-	if not "!NTF!"=="" echo.>>"%HOSTS%"
-	echo #### BEGIN UNIFIED HOSTS ####>>"%HOSTS%"
-	echo #### END UNIFIED HOSTS ####>>"%HOSTS%"
-	goto update
+	if /i not "%URLD%"=="remove" (
+		for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
+		if not "!NTF!"=="" echo.>>"%HOSTS%"
+		echo #### BEGIN UNIFIED HOSTS ####>>"%HOSTS%"
+		echo #### END UNIFIED HOSTS ####>>"%HOSTS%"
+		goto update
+	) else goto Exit
 )
 
 if !MARKED!==2 (
@@ -400,8 +402,13 @@ if not !QUIET!==1 (
 
 if %NET%==0 goto Skip_Hosts_Update
 
-call :Echo "Updating the hosts file..."
-call :File 0
+if /i "%URLD%"=="remove" (
+	call :Echo "Removing the Unified Hosts from the hosts file..."
+	call :File 1
+) else (
+	call :Echo "Updating the hosts file..."
+	call :File 0
+)
 call :Flush
 
 :Skip_Hosts_Update
@@ -436,7 +443,7 @@ rem File writing function
 :File
 
 rem If updating/installing, download the target hosts file to cache if not already downloaded
-if not "%URLD%"=="%URL%" (
+if %1==0 if not "%URLD%"=="%URL%" (
 	if !QUIET!==1 set URL=%URLD%
 	call :Download !URL! "%CTEMP%" hosts || goto Failed_Download
 )
@@ -470,7 +477,7 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 				if /i not "%%b"=="#### BEGIN UNIFIED HOSTS ####" echo %%b
 			)
 			if /i "%%b"=="#### BEGIN UNIFIED HOSTS ####" (
-				if not %1==1 (
+				if %1==0 (
 					echo %%b
 					echo # Managed by ScriptTiger's Unified Hosts AutoUpdate
 					echo # https://github.com/ScriptTiger/Unified-Hosts-AutoUpdate
@@ -502,7 +509,7 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 			)
 		)
 		if /i "%%b"=="#### END UNIFIED HOSTS ####" (
-			if not %1==1 (
+			if %1==0 (
 				echo #
 				type "%CUSTOM%"
 				for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%CUSTOM%"') do set NTF=%%1
