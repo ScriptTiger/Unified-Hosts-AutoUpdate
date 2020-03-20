@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.42
+set V=1.43
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -40,20 +40,22 @@ set NET=1
 set EXIT=0
 set DFC=0
 
-rem Check switches and shift over
-:Switches
-if not "%~1"=="/U" (
-	set SWITCH=.%~1
-	if "%SWITCH:~,2%"=="./" (
-		set SWITCH=%~1
-		set SWITCH=!SWITCH:"=!
-		if /i "!SWITCH!"=="/dfc" set DFC=1
-		if /i "!SWITCH!"=="/log" set LOG=!LOGD!
-		if /i "!SWITCH:~,5!"=="/log:" set LOG=!SWITCH:~5!
-		shift
-		goto Switches
-	)
+if "%~1"=="/U" goto Skip_Options
+
+rem Check options and shift over
+:Options
+set OPTION=.%~1
+if "%OPTION:~,2%"=="./" (
+	set OPTION=%~1
+	set OPTION=!OPTION:"=!
+	if /i "!OPTION!"=="/dfc" set DFC=1
+	if /i "!OPTION!"=="/log" set LOG=!LOGD!
+	if /i "!OPTION:~,5!"=="/log:" set LOG=!OPTION:~5!
+	shift
+	goto Options
 )
+
+:Skip_Options
 
 rem Set logging mechanism
 if exist "%LOCK%" (
@@ -123,7 +125,8 @@ if not !QUIET!==1 (
 )
 
 rem Begin version checks
-call :Echo "Checking for script updates..."
+call :Echo "Your current script version is %V%" ^
+"Checking for script updates..."
 
 rem Grab local version and commit
 for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
