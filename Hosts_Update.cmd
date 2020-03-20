@@ -40,11 +40,15 @@ set NET=1
 set EXIT=0
 set DFC=0
 
-if "%~1"=="/U" goto Skip_Options
+rem Skip options if script is coming back from being updated
+set OPTION=.%~1
+if "!OPTION!"=="./U" goto Skip_Options
+
+rem Remember arguments
+set ARGS=%*
 
 rem Check options and shift over
 :Options
-set OPTION=.%~1
 if "%OPTION:~,2%"=="./" (
 	set OPTION=%~1
 	set OPTION=!OPTION:"=!
@@ -52,6 +56,7 @@ if "%OPTION:~,2%"=="./" (
 	if /i "!OPTION!"=="/log" set LOG=!LOGD!
 	if /i "!OPTION:~,5!"=="/log:" set LOG=!OPTION:~5!
 	shift
+	set OPTION=.%~1
 	goto Options
 )
 
@@ -64,6 +69,7 @@ if exist "%LOCK%" (
 )
 if "%LOG%"=="" set LOG=nul
 
+echo %DATE% @ %TIME%: [%SELF% %ARGS%]>>"!LOG!"
 call :Echo "Initializing..."
 
 rem Check if script is returning from being updated and finish update process
@@ -88,7 +94,8 @@ if "%~1"=="/U" (
 		if not "%2"=="" set NEWCOMP=%2
 		if "%LOG%"=="nul" (
 			set LOG=%LOGD%
-			echo %DATE% @ %TIME%: Initializing...>"!LOG!"
+			echo %DATE% @ %TIME%: [%SELF% %ARGS%]>"!LOG!"
+			echo %DATE% @ %TIME%: Initializing...>>"!LOG!"
 		)
 	)
 )
