@@ -42,13 +42,14 @@ set DFC=0
 
 rem Skip options if script is coming back from being updated
 set OPTION=.%~1
-if "!OPTION!"=="./U" goto Skip_Options
+if "%OPTION%"=="./U" goto Skip_Options
 
 rem Remember arguments
 set ARGS=%*
 
 rem Check options and shift over
 :Options
+set OPTION=.%~1
 if "%OPTION:~,2%"=="./" (
 	set OPTION=%~1
 	set OPTION=!OPTION:"=!
@@ -56,7 +57,6 @@ if "%OPTION:~,2%"=="./" (
 	if /i "!OPTION!"=="/log" set LOG=!LOGD!
 	if /i "!OPTION:~,5!"=="/log:" set LOG=!OPTION:~5!
 	shift
-	set OPTION=.%~1
 	goto Options
 )
 
