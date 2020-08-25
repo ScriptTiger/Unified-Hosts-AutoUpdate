@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.43
+set V=1.44
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -46,6 +46,30 @@ if "%OPTION%"=="./U" goto Skip_Options
 
 rem Remember arguments
 set ARGS=%*
+
+rem Grab local version and commit
+for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
+	set OLD=%%0
+	set COMMIT=%%1
+)
+
+rem Turn on script updates by default, then determine and set user preference
+rem If script updates disabled, also disable default logging mechanism
+set UPDATES=1
+if /i "%OLD:~-1%"=="X" (
+	set UPDATES=0
+	set LOG=nul
+	call :Echo "Script updates currently disabled"
+)
+
+rem Strip out emergency status if present in local version
+if "%OLD:~,1%"=="X" (
+	set OLD=%OLD:~1%
+	echo !OLD! %COMMIT%>"%VERSION%"
+)
+
+rem Combine local version info to single string
+set OLD=%V%%OLD%%COMMIT%
 
 rem Check options and shift over
 :Options
@@ -83,7 +107,6 @@ if "%~1"=="/U" (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
 	rem Initialize QUIET to off/0
-
 	if "%1"=="" (
 		set URLD=
 		set QUIET=0
@@ -92,7 +115,7 @@ if "%~1"=="/U" (
 		set URLD=%1
 		set QUIET=1
 		if not "%2"=="" set NEWCOMP=%2
-		if "%LOG%"=="nul" (
+		if "%LOG%"=="nul" if "%UPDATES%"=="1" (
 			set LOG=%LOGD%
 			echo %DATE% @ %TIME%: [%SELF% %ARGS%]>"!LOG!"
 			echo %DATE% @ %TIME%: Initializing...>>"!LOG!"
@@ -131,31 +154,11 @@ if not !QUIET!==1 (
 	call :Echo "%GHD% reached successfully"
 )
 
+if "%UPDATES%"=="0" goto Skip_Script_Update
+
 rem Begin version checks
 call :Echo "Your current script version is %V%" ^
 "Checking for script updates..."
-
-rem Grab local version and commit
-for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
-	set OLD=%%0
-	set COMMIT=%%1
-)
-
-rem If script updates are disabled, skip to the next step
-if /i "%OLD:~-1%"=="X" (
-	call :Echo "Script updates currently disabled"
-	goto Skip_Script_Update
-)
-
-
-rem Strip out emergency status if present in local version
-if "%OLD:~,1%"=="X" (
-	set OLD=%OLD:~1%
-	echo !OLD! %COMMIT%>"%VERSION%"
-)
-
-rem Combine local version info to single string
-set OLD=%V%%OLD%%COMMIT%
 
 rem Grab remote script VERSION file
 rem On error, report connectivity problem
