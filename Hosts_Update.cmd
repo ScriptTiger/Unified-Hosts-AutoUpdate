@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.45
+set V=1.46
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -40,36 +40,14 @@ set NET=1
 set EXIT=0
 set DFC=0
 
-rem Grab local version and commit
-for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
-	set OLD=%%0
-	set COMMIT=%%1
-)
-
-rem Turn on script updates by default, then determine and set user preference
-rem If script updates disabled, also disable default logging mechanism
-set UPDATES=1
-if /i "%OLD:~-1%"=="X" (
-	set UPDATES=0
-	set LOG=nul
-	call :Echo "Script updates currently disabled"
-)
-
-rem Strip out emergency status if present in local version
-if "%OLD:~,1%"=="X" (
-	set OLD=%OLD:~1%
-	echo !OLD! %COMMIT%>"%VERSION%"
-)
-
-rem Combine local version info to single string
-set OLD=%V%%OLD%%COMMIT%
-
 rem Skip options if script is coming back from being updated
 set OPTION=.%~1
 if "%OPTION%"=="./U" goto Skip_Options
 
 rem Remember arguments
 set ARGS=%*
+
+call :Version
 
 rem Check options and shift over
 :Options
@@ -103,6 +81,7 @@ if "%~1"=="/U" (
 	echo %NEW% %COMMIT%>"%VERSION%"
 	if exist "%README%" del /q "%README%"
 	call :Download %GH%/%COMMIT%/README.md "%README%" readme || goto Failed_Download
+	call :Version
 ) else (
 
 	rem If the URL is sent as a parameter, set the URL variable and turn the script to quiet mode with no prompts
@@ -779,6 +758,33 @@ rem Function to log executions
 :Execute
 echo %DATE% @ %TIME%: Executing: %*>>"%LOG%"
 %*>>"%LOG%" || exit /b 1
+exit /b
+
+rem Function to check local version
+:Version
+rem Grab local version and commit
+for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
+	set OLD=%%0
+	set COMMIT=%%1
+)
+
+rem Turn on script updates by default, then determine and set user preference
+rem If script updates disabled, also disable default logging mechanism
+set UPDATES=1
+if /i "%OLD:~-1%"=="X" (
+	set UPDATES=0
+	set LOG=nul
+	call :Echo "Script updates currently disabled"
+)
+
+rem Strip out emergency status if present in local version
+if "%OLD:~,1%"=="X" (
+	set OLD=%OLD:~1%
+	echo !OLD! %COMMIT%>"%VERSION%"
+)
+
+rem Combine local version info to single string
+set OLD=%V%%OLD%%COMMIT%
 exit /b
 
 rem Error handling functions
