@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.44
+set V=1.45
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -40,13 +40,6 @@ set NET=1
 set EXIT=0
 set DFC=0
 
-rem Skip options if script is coming back from being updated
-set OPTION=.%~1
-if "%OPTION%"=="./U" goto Skip_Options
-
-rem Remember arguments
-set ARGS=%*
-
 rem Grab local version and commit
 for /f "tokens=1,2" %%0 in ('type "%VERSION%"') do (
 	set OLD=%%0
@@ -70,6 +63,13 @@ if "%OLD:~,1%"=="X" (
 
 rem Combine local version info to single string
 set OLD=%V%%OLD%%COMMIT%
+
+rem Skip options if script is coming back from being updated
+set OPTION=.%~1
+if "%OPTION%"=="./U" goto Skip_Options
+
+rem Remember arguments
+set ARGS=%*
 
 rem Check options and shift over
 :Options
