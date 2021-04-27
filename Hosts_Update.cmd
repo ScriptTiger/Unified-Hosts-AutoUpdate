@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.46
+set V=1.47
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -519,6 +519,7 @@ timeout /t 3 /nobreak > nul
 
 :Write
 call :Execute copy "%CHOSTS%" "%HOSTS%" /y
+call :Execute attrib +R "%HOSTS%"
 
 rem Make sure the hosts file was placed correctly and take action accordingly
 if !errorlevel!==0 (
