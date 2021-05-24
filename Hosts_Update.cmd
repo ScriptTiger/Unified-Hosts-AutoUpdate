@@ -513,12 +513,17 @@ rem Filter Unified Hosts to remove white space and entries from ignore list
 	)
 ) > "%CHOSTS%"
 
-rem Wait some time to make sure all the processes are done accessing the hosts
 rem Overwrite the old hosts with the new one
-timeout /t 3 /nobreak > nul
-
+rem Wait some time between changes to make sure all the processes are done accessing the hosts
 :Write
+
+timeout /t 3 /nobreak > nul
+call :Execute attrib -R "%HOSTS%"
+
+timeout /t 3 /nobreak > nul
 call :Execute copy "%CHOSTS%" "%HOSTS%" /y
+
+timeout /t 3 /nobreak > nul
 call :Execute attrib +R "%HOSTS%"
 
 rem Make sure the hosts file was placed correctly and take action accordingly
