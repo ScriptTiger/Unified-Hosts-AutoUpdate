@@ -111,7 +111,7 @@ call :Execute bitsadmin /list && set DOWNLOADER=1
 call :Execute powershell $host.version && set DOWNLOADER=2
 if %DOWNLOADER%==2 (
 	set DOWNLOADER=PowerShell
-	set DOWNLOADER_FROM=powershell invoke-webrequest
+	set DOWNLOADER_FROM=powershell [Net.ServicePointManager]::SecurityProtocol +='tls12';invoke-webrequest
 	set DOWNLOADER_TO= -outfile
 	set Q='
 )
