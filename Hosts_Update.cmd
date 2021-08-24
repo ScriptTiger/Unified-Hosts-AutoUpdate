@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.47
+set V=1.48
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -32,7 +32,7 @@ set GHD=raw.githubusercontent.com
 set GH=https://%GHD%/ScriptTiger/Unified-Hosts-AutoUpdate
 set HOSTS=%SYSTEMROOT%\System32\drivers\etc\hosts
 set CHOSTS=%CACHE%\hosts
-set BASE=https://raw.githubusercontent.com/StevenBlack/hosts/master
+set BASE=https://%GHD%/StevenBlack/hosts/master
 set TASKER=%SYSTEMROOT%\System32\schtasks.exe
 set TN=Unified Hosts AutoUpdate
 set HASHER=%SYSTEMROOT%\System32\certutil.exe
@@ -129,7 +129,14 @@ if not exist "%CACHE%" md "%CACHE%"
 rem If not in quiet mode, check general connectivity
 if not !QUIET!==1 (
 	call :Echo "Checking connectivity to %GHD%..."
-	call :Execute ping -n 10 -w 2000 %GHD% || goto Connectivity
+	call :Execute ping -n 10 -w 2000 %GHD%
+	if !errorlevel!==1 (
+		call :Echo "%GHD% could not be successfully pinged"
+		choice.exe /m "Is the network you are on blocking pings?"
+		if !errorlevel!==1 (
+			call :Execute %DOWNLOADER_FROM% %GH%/master/VERSION %DOWNLOADER_TO% %Q%%CTEMP%%Q% || goto Downloader_Connectivity
+		) else goto Connectivity
+	)
 	call :Echo "%GHD% reached successfully"
 )
 
