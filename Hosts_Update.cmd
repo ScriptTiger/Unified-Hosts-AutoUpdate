@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.48
+set V=1.49
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -270,9 +270,13 @@ if !MARKED!==0 (
 	)
 	if /i not "%URLD%"=="remove" (
 		for /f "tokens=1* delims=:" %%0 in ('findstr /n .* "%HOSTS%"') do set NTF=%%1
+		call :Execute attrib -R "%HOSTS%"
+		timeout /t 3 /nobreak > nul
 		if not "!NTF!"=="" echo.>>"%HOSTS%"
 		echo #### BEGIN UNIFIED HOSTS ####>>"%HOSTS%"
 		echo #### END UNIFIED HOSTS ####>>"%HOSTS%"
+		timeout /t 3 /nobreak > nul
+		call :Execute attrib +R "%HOSTS%"
 		goto update
 	) else goto Exit
 )
