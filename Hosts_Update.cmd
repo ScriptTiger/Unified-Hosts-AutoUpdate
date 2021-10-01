@@ -11,7 +11,7 @@ rem Enable delayed expansion to be used during for loops and other parenthetical
 setlocal ENABLEDELAYEDEXPANSION
 
 rem Script version number
-set V=1.49
+set V=1.50
 
 rem Set Resource and target locations
 set CACHE=Unified-Hosts-AutoUpdate
@@ -205,6 +205,7 @@ if not exist "%IGNORE%" (
 		echo # To force changes now, run Hosts_Update.cmd with the "update anyway" option
 		echo # If you decide to delete the below entries, DO NOT delete these above comment lines
 		echo # If this file is left completely empty, the script will break
+		echo # Empty comment lines in this file may also break the script
 		echo # Uncomment the below entry to allow the analytics.google.com domain
 		echo #0.0.0.0 analytics.google.com
 	) > "%IGNORE%"
