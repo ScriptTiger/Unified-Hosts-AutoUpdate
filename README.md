@@ -59,7 +59,7 @@ Decimal Error Code | Hexadecimal Error Code | Explanation
 
 **This script is in active development, so please share your feedback on what you like and don't like so we know what direction to take and don't inadvertently make things worse**
 
+# More About ScriptTiger
+
 For more ScriptTiger scripts and goodies, check out ScriptTiger's GitHub Pages website:  
 https://scripttiger.github.io/
-
-[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MZ4FH4G5XHGZ4)
