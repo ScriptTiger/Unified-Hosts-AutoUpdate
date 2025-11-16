@@ -669,26 +669,7 @@ goto Exit
 
 rem Function to view text files
 :View_TextFile
-set PROGID=
-set CMDVIEWTEXT=
-call :Execute reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID
-if !errorlevel!==0 (
-	for /f "tokens=3" %%a in (
-		'reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.txt\UserChoice /v PROGID'
-	) do set PROGID=%%a
-	if "!PROGID:~,13!"=="Applications\" (
-		for /f "tokens=2*" %%a in (
-			'reg query HKCR\!PROGID!\shell\open\command'
-		) do set CMDVIEWTEXT=%%b
-	) else (
-		for /f "tokens=2 delims==" %%a in (
-			'ftype !PROGID!'
-		) do set CMDVIEWTEXT=%%a
-	)
-	for /f "tokens=* usebackq" %%a in (
-		`echo "!CMDVIEWTEXT:%%1=%1!"`
-	) do start "" %%~a
-) else start notepad %1
+start "" %1
 exit /b
 
 rem Function to handle script exits
